@@ -1,0 +1,66 @@
+{
+  "cam": "33",
+  "name": "Source profile 33",
+  "status": "source-profile",
+  "surface_mode": "stepped",
+  "profile_values_mm": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    1.5,
+    0,
+    1.5,
+    0,
+    1.5,
+    0,
+    1.5,
+    0,
+    1.5
+  ],
+  "stitch_name": "hi-lo",
+  "stitch_preview_points": [
+    [
+      -1.0,
+      0.2
+    ],
+    [
+      -0.75,
+      0.82
+    ],
+    [
+      -0.5,
+      0.2
+    ],
+    [
+      -0.25,
+      0.65
+    ],
+    [
+      0.0,
+      0.2
+    ],
+    [
+      0.25,
+      0.57
+    ],
+    [
+      0.5,
+      0.2
+    ],
+    [
+      0.75,
+      0.48
+    ],
+    [
+      1.0,
+      0.2
+    ]
+  ],
+  "labeling": "raised 7-segment number + raised stitch preview geometry"
+}

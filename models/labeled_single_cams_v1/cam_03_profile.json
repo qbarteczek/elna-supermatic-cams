@@ -1,0 +1,66 @@
+{
+  "cam": "03",
+  "name": "Basic zigzag",
+  "status": "STL-reference/candidate",
+  "surface_mode": "stepped",
+  "profile_values_mm": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    3
+  ],
+  "stitch_name": "zigzag",
+  "stitch_preview_points": [
+    [
+      -1.0,
+      0.0
+    ],
+    [
+      -0.75,
+      1.0
+    ],
+    [
+      -0.5,
+      0.0
+    ],
+    [
+      -0.25,
+      1.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.25,
+      1.0
+    ],
+    [
+      0.5,
+      0.0
+    ],
+    [
+      0.75,
+      1.0
+    ],
+    [
+      1.0,
+      0.0
+    ]
+  ],
+  "labeling": "raised 7-segment number + raised stitch preview geometry"
+}

@@ -1,0 +1,74 @@
+{
+  "cam": "06",
+  "name": "Wide zigzag",
+  "status": "candidate",
+  "surface_mode": "stepped",
+  "profile_values_mm": [
+    0,
+    1.5,
+    3,
+    1.5,
+    0,
+    1.5,
+    3,
+    1.5,
+    0,
+    1.5,
+    3,
+    1.5,
+    0,
+    1.5,
+    3,
+    1.5,
+    0,
+    1.5
+  ],
+  "stitch_name": "wide-zig",
+  "stitch_preview_points": [
+    [
+      -1.0,
+      0.0
+    ],
+    [
+      -0.8,
+      1.0
+    ],
+    [
+      -0.6,
+      0.0
+    ],
+    [
+      -0.4,
+      1.0
+    ],
+    [
+      -0.2,
+      0.0
+    ],
+    [
+      0.0,
+      1.0
+    ],
+    [
+      0.2,
+      0.0
+    ],
+    [
+      0.4,
+      1.0
+    ],
+    [
+      0.6,
+      0.0
+    ],
+    [
+      0.8,
+      1.0
+    ],
+    [
+      1.0,
+      0.0
+    ]
+  ],
+  "labeling": "raised 7-segment number + raised stitch preview geometry"
+}

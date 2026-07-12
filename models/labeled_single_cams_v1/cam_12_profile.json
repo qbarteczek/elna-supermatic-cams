@@ -1,0 +1,66 @@
+{
+  "cam": "12",
+  "name": "Spindle",
+  "status": "candidate",
+  "surface_mode": "stepped",
+  "profile_values_mm": [
+    0,
+    1,
+    2,
+    3,
+    2,
+    1,
+    0,
+    1,
+    2,
+    3,
+    2,
+    1,
+    0,
+    1,
+    2,
+    3,
+    2,
+    1
+  ],
+  "stitch_name": "spindle",
+  "stitch_preview_points": [
+    [
+      -1.0,
+      0.5
+    ],
+    [
+      -0.78,
+      0.2
+    ],
+    [
+      -0.55,
+      0.14
+    ],
+    [
+      -0.28,
+      0.42
+    ],
+    [
+      0.0,
+      0.86
+    ],
+    [
+      0.28,
+      0.42
+    ],
+    [
+      0.55,
+      0.14
+    ],
+    [
+      0.78,
+      0.2
+    ],
+    [
+      1.0,
+      0.5
+    ]
+  ],
+  "labeling": "raised 7-segment number + raised stitch preview geometry"
+}
