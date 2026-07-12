@@ -1,0 +1,27 @@
+{
+  "cam": "20",
+  "type": "single",
+  "status": "source-profile",
+  "source": "ln-komandur/elna-cam-discs",
+  "profile_tokens": [
+    "l",
+    "r",
+    "l",
+    "r",
+    "l",
+    "r",
+    "l",
+    "r",
+    "l",
+    "cr",
+    "cl",
+    "cr",
+    "cl",
+    "cr",
+    "cl",
+    "cr",
+    "cl",
+    "cr"
+  ],
+  "notes": "Profile copied as 18-token representation from the known source OpenSCAD plotpoly(...) call."
+}
