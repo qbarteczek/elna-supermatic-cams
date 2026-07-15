@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elna Supermatic Cam Designer</title>
+<meta name="description" content="Draw a stitch pattern and generate a 3D-printable OpenSCAD cam disc for the vintage Elna Supermatic sewing machine.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #f78166;
+    --accent3: #56d364;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --cam-min: #2d5986;
+    --cam-max: #f78166;
+    --grid: #21262d;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent) 0%, #f78166 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  header h1 { font-size: 17px; font-weight: 600; color: var(--text); }
+  header p { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  .header-right {
+    margin-left: auto;
+    display: flex; gap: 8px; align-items: center;
+  }
+
+  .badge {
+    font-size: 11px; padding: 3px 8px;
+    border-radius: 20px; font-weight: 500;
+    background: rgba(88,166,255,0.15); color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.3);
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto auto;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+  }
+
+  .panel-header h2 {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    flex: 1;
+  }
+
+  .panel-header .hint {
+    font-size: 11px; color: var(--text3);
+  }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-blue { background: var(--accent); }
+  .dot-orange { background: var(--accent2); }
+  .dot-green { background: var(--accent3); }
+
+  /* ── STITCH EDITOR ─────────────────────────────────── */
+  .stitch-panel { grid-column: 1; grid-row: 1; }
+
+  .stitch-editor-wrap {
+    padding: 16px;
+    position: relative;
+  }
+
+  .mode-bar {
+    display: flex; gap: 6px; margin-bottom: 12px;
+    align-items: center; flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2); font-size: 12px;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .mode-btn.active {
+    background: rgba(88,166,255,0.15); color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .preset-sep { color: var(--text3); font-size: 11px; margin-left: 6px; }
+
+  .preset-btn {
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text3); font-size: 11px;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .preset-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  #stitch-canvas {
+    display: block;
+    width: 100%;
+    height: 220px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: crosshair;
+    background: var(--bg);
+    touch-action: none;
+  }
+
+  .axis-labels {
+    display: flex; justify-content: space-between;
+    padding: 4px 0 0;
+    font-size: 10px; color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .y-labels {
+    position: absolute; left: 8px; top: 52px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    height: 220px; pointer-events: none;
+    font-size: 10px; color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 0;
+  }
+
+  .values-row {
+    display: grid; grid-template-columns: repeat(18, 1fr);
+    gap: 2px; margin-top: 8px;
+  }
+
+  .val-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 9px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 3px 1px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .val-cell:hover { border-color: var(--accent); }
+
+  /* ── CAM PREVIEW ───────────────────────────────────── */
+  .cam-panel { grid-column: 2; grid-row: 1 / 3; }
+
+  .cam-preview-wrap {
+    padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+
+  #cam-svg {
+    width: 100%; max-width: 280px;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+  }
+
+  .cam-stats {
+    width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .stat-box .label { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .stat-box .value { font-size: 14px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── ICON EDITOR ───────────────────────────────────── */
+  .icon-panel { grid-column: 1; grid-row: 2; }
+
+  .icon-editor-wrap { padding: 16px; }
+
+  .icon-sub {
+    font-size: 11px; color: var(--text2); margin-bottom: 12px;
+  }
+
+  .icon-layout {
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+
+  #icon-canvas {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    cursor: crosshair;
+    flex-shrink: 0;
+  }
+
+  .icon-controls {
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .icon-tool-btn {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2); font-size: 12px;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+    text-align: left;
+  }
+  .icon-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-tool-btn.active {
+    background: rgba(88,166,255,0.15); color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .icon-hint {
+    font-size: 10px; color: var(--text3);
+    line-height: 1.5;
+  }
+
+  /* ── EXPORT PANEL ──────────────────────────────────── */
+  .export-panel {
+    grid-column: 1 / 3; grid-row: 3;
+    /* appears below both columns */
+  }
+
+  .export-wrap {
+    padding: 16px;
+    display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: 11px; color: var(--text2); }
+
+  .field-input {
+    padding: 7px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    font-size: 13px; font-family: 'JetBrains Mono', monospace;
+    width: 80px;
+    transition: border-color 0.15s;
+  }
+  .field-input.wide { width: 240px; font-family: 'Inter', sans-serif; }
+  .field-input:focus { outline: none; border-color: var(--accent); }
+
+  .export-btn {
+    padding: 8px 20px; border-radius: 8px;
+    border: 1px solid; cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    font-family: inherit; transition: all 0.15s;
+  }
+
+  .btn-json {
+    background: rgba(86,211,100,0.12); color: var(--accent3);
+    border-color: rgba(86,211,100,0.4);
+  }
+  .btn-json:hover { background: rgba(86,211,100,0.22); }
+
+  .btn-scad {
+    background: rgba(88,166,255,0.12); color: var(--accent);
+    border-color: rgba(88,166,255,0.4);
+  }
+  .btn-scad:hover { background: rgba(88,166,255,0.22); }
+
+  .btn-both {
+    background: rgba(247,129,102,0.12); color: var(--accent2);
+    border-color: rgba(247,129,102,0.4);
+  }
+  .btn-both:hover { background: rgba(247,129,102,0.22); }
+
+  .export-sep {
+    width: 1px; height: 40px; background: var(--border);
+    margin: 0 4px; align-self: center;
+  }
+
+  .status-msg {
+    font-size: 12px; color: var(--accent3);
+    align-self: center; opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .status-msg.show { opacity: 1; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed; background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 8px; font-size: 11px; pointer-events: none;
+    z-index: 1000; display: none; font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🧵</div>
+  <div>
+    <h1>Elna Supermatic Cam Designer</h1>
+    <p>Draw a stitch pattern → generate OpenSCAD cam disc</p>
+  </div>
+  <div class="header-right">
+    <span class="badge">18 positions · 20° each</span>
+    <span class="badge">GPL-3.0</span>
+  </div>
+</header>
+
+<main>
+  <!-- ── STITCH EDITOR ── -->
+  <div class="panel stitch-panel">
+    <div class="panel-header">
+      <div class="dot dot-blue"></div>
+      <h2>Stitch Pattern Editor</h2>
+      <span class="hint">Click or drag to draw · Y = needle lateral position</span>
+    </div>
+    <div class="stitch-editor-wrap">
+      <div class="mode-bar">
+        <button class="mode-btn active" id="btn-draw" onclick="setMode('draw')">✏️ Draw</button>
+        <button class="mode-btn" id="btn-smooth" onclick="setMode('smooth')">〰️ Smooth</button>
+        <span class="preset-sep">Presets:</span>
+        <button class="preset-btn" onclick="applyPreset('zigzag')">Zigzag</button>
+        <button class="preset-btn" onclick="applyPreset('straight')">Straight</button>
+        <button class="preset-btn" onclick="applyPreset('step')">Step</button>
+        <button class="preset-btn" onclick="applyPreset('wave')">Wave</button>
+        <button class="preset-btn" onclick="applyPreset('satin')">Satin</button>
+        <button class="preset-btn" onclick="clearProfile()">Clear</button>
+      </div>
+      <div style="position:relative">
+        <div class="y-labels">
+          <span>3.0</span>
+          <span>2.0</span>
+          <span>1.0</span>
+          <span>0.0</span>
+        </div>
+        <canvas id="stitch-canvas" style="margin-left:20px;width:calc(100% - 20px);height:220px"></canvas>
+      </div>
+      <div class="axis-labels" style="margin-left:20px">
+        <span>0°</span><span>40°</span><span>80°</span><span>120°</span>
+        <span>160°</span><span>200°</span><span>240°</span><span>280°</span>
+        <span>320°</span><span>360°</span>
+      </div>
+      <div class="values-row" id="values-row" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- ── CAM PREVIEW ── -->
+  <div class="panel cam-panel">
+    <div class="panel-header">
+      <div class="dot dot-orange"></div>
+      <h2>Cam Profile Preview</h2>
+    </div>
+    <div class="cam-preview-wrap">
+      <svg id="cam-svg" viewBox="-130 -130 260 260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="camGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#2d5986" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#1c2330" stop-opacity="0.8"/>
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Base circles -->
+        <circle cx="0" cy="0" r="110" fill="none" stroke="#21262d" stroke-width="0.5"/>
+        <circle cx="0" cy="0" r="93" fill="none" stroke="#21262d" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <circle cx="0" cy="0" r="75" fill="none" stroke="#21262d" stroke-width="0.5"/>
+        <!-- Cam body fill -->
+        <polygon id="cam-fill" fill="url(#camGrad)" stroke="none"/>
+        <!-- Cam outline -->
+        <polygon id="cam-outline" fill="none" stroke="#58a6ff" stroke-width="1.5" filter="url(#glow)"/>
+        <!-- Base circle ring -->
+        <circle cx="0" cy="0" r="93" fill="none" stroke="#2d5986" stroke-width="0.8" stroke-dasharray="2,4"/>
+        <!-- Center hole -->
+        <circle cx="0" cy="0" r="33" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+        <!-- Transport slot -->
+        <rect x="-6" y="38" width="12" height="16" rx="2" fill="#161b22" stroke="#30363d" stroke-width="0.8"/>
+        <!-- Angle ticks -->
+        <g id="angle-ticks"></g>
+        <!-- Profile dots -->
+        <g id="profile-dots"></g>
+        <!-- Labels -->
+        <text x="0" y="6" text-anchor="middle" fill="#6e7681" font-size="9" font-family="JetBrains Mono">⌀43.6mm</text>
+        <text x="0" y="-3" text-anchor="middle" fill="#6e7681" font-size="7" font-family="JetBrains Mono">Ø shaft</text>
+      </svg>
+
+      <div class="cam-stats">
+        <div class="stat-box">
+          <div class="label">Min radius</div>
+          <div class="value" id="stat-min">18.6mm</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Max radius</div>
+          <div class="value" id="stat-max">21.8mm</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Throw</div>
+          <div class="value" id="stat-throw">3.3mm</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Positions</div>
+          <div class="value" id="stat-pos">18</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ICON EDITOR ── -->
+  <div class="panel icon-panel">
+    <div class="panel-header">
+      <div class="dot dot-green"></div>
+      <h2>Stitch Pictogram Editor</h2>
+      <span class="hint">Top disc icon (raised line)</span>
+    </div>
+    <div class="icon-editor-wrap">
+      <p class="icon-sub">Draw the stitch symbol that appears embossed on top of the cam disc.</p>
+      <div class="icon-layout">
+        <canvas id="icon-canvas" width="240" height="100"></canvas>
+        <div class="icon-controls">
+          <button class="icon-tool-btn active" id="itool-draw" onclick="setIconTool('draw')">✏️ Draw line</button>
+          <button class="icon-tool-btn" id="itool-erase" onclick="setIconTool('erase')">🧹 Erase</button>
+          <button class="icon-tool-btn" onclick="clearIcon()">🗑️ Clear all</button>
+          <button class="icon-tool-btn" onclick="autoIcon()">✨ Auto from stitch</button>
+          <div class="icon-hint">
+            Points snap to grid.<br>
+            The line will be extruded 0.31mm<br>
+            above the disc surface.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EXPORT ── -->
+  <div class="panel export-panel" style="grid-column: 1 / 3; grid-row: 3;">
+    <div class="panel-header">
+      <div class="dot dot-green"></div>
+      <h2>Export</h2>
+    </div>
+    <div class="export-wrap">
+      <div class="field-group">
+        <label>Cam number</label>
+        <input class="field-input" id="cam-num" type="text" value="35" maxlength="2" placeholder="35">
+      </div>
+      <div class="field-group">
+        <label>Cam name</label>
+        <input class="field-input wide" id="cam-name" type="text" value="Custom cam" placeholder="My custom stitch">
+      </div>
+      <div class="export-sep"></div>
+      <button class="export-btn btn-json" onclick="exportJSON()">⬇ JSON</button>
+      <button class="export-btn btn-scad" onclick="exportSCAD()">⬇ SCAD</button>
+      <button class="export-btn btn-both" onclick="exportBoth()">⬇ Both files</button>
+      <div class="status-msg" id="status-msg">✓ Files downloaded!</div>
+    </div>
+  </div>
+</main>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const N = 18;               // number of cam positions
+const BASE_R = 18.55;       // mm — minimum cam radius
+const THROW_R = 3.27;       // mm — max additional radius
+const SCALE  = 5.0;         // SVG units per mm
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let profile = new Array(N).fill(0);   // values 0.0–3.0
+let mode = 'draw';                     // 'draw' | 'smooth'
+let iconPoints = [];                   // [{x,y}] normalised 0-1
+let iconTool = 'draw';
+let iconDrawing = false;
+
+// ══════════════════════════════════════════════════════
+//  PRESETS
+// ══════════════════════════════════════════════════════
+const PRESETS = {
+  zigzag:   [0,3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0,3],
+  straight: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  step:     [1.5,0,1.5,0,1.5,0,1.5,0,1.5,1.5,3,1.5,3,1.5,3,1.5,3,1.5],
+  wave:     [0,0.5,1.5,2.5,3,2.5,1.5,0.5,0,0.5,1.5,2.5,3,2.5,1.5,0.5,0,0],
+  satin:    [0,3,3,0,0,3,3,0,0,3,3,0,0,3,3,0,0,3],
+};
+
+function applyPreset(name) {
+  profile = [...PRESETS[name]];
+  autoIcon();
+  render();
+}
+
+function clearProfile() {
+  profile = new Array(N).fill(0);
+  render();
+}
+
+// ══════════════════════════════════════════════════════
+//  STITCH CANVAS
+// ══════════════════════════════════════════════════════
+const sc = document.getElementById('stitch-canvas');
+const sctx = sc.getContext('2d');
+let scW, scH;
+
+function resizeStitchCanvas() {
+  const rect = sc.getBoundingClientRect();
+  sc.width  = rect.width  * devicePixelRatio;
+  sc.height = rect.height * devicePixelRatio;
+  scW = sc.width; scH = sc.height;
+  drawStitch();
+}
+
+function profileToY(v) { return scH * (1 - v / 3) * 0.85 + scH * 0.07; }
+function yToProfile(y) { return Math.max(0, Math.min(3, (1 - (y/scH - 0.07) / 0.85) * 3)); }
+function posToX(i)     { return (i / N) * scW; }
+function xToPos(x)     { return Math.max(0, Math.min(N-1, Math.round(x / scW * N))); }
+
+function drawStitch() {
+  sctx.clearRect(0, 0, scW, scH);
+
+  const dpr = devicePixelRatio;
+
+  // Grid
+  sctx.strokeStyle = '#21262d';
+  sctx.lineWidth = 1;
+  for (let i = 0; i <= N; i++) {
+    const x = posToX(i);
+    sctx.beginPath(); sctx.moveTo(x, 0); sctx.lineTo(x, scH); sctx.stroke();
+  }
+  for (let v of [0, 1, 1.5, 2, 3]) {
+    const y = profileToY(v);
+    sctx.strokeStyle = v === 0 || v === 3 ? '#30363d' : '#21262d';
+    sctx.setLineDash(v === 1.5 ? [4*dpr, 4*dpr] : []);
+    sctx.beginPath(); sctx.moveTo(0, y); sctx.lineTo(scW, y); sctx.stroke();
+  }
+  sctx.setLineDash([]);
+
+  // Column highlights
+  for (let i = 0; i < N; i++) {
+    const x0 = posToX(i), x1 = posToX(i+1);
+    const y0 = profileToY(0), y1 = profileToY(profile[i]);
+    const ratio = profile[i] / 3;
+    sctx.fillStyle = `rgba(88,166,255,${0.05 + ratio * 0.12})`;
+    sctx.fillRect(x0+1, Math.min(y0,y1), x1-x0-2, Math.abs(y0-y1));
+  }
+
+  // Smooth profile line
+  sctx.strokeStyle = '#58a6ff';
+  sctx.lineWidth = 2 * dpr;
+  sctx.shadowColor = '#58a6ff';
+  sctx.shadowBlur = 6 * dpr;
+  sctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const x = posToX(i) + (posToX(1) - posToX(0)) / 2;
+    const y = profileToY(profile[i]);
+    i === 0 ? sctx.moveTo(x, y) : sctx.lineTo(x, y);
+  }
+  // Close loop
+  const x0 = posToX(0) + (posToX(1) - posToX(0)) / 2;
+  sctx.lineTo(posToX(N) + (posToX(1)-posToX(0))/2, profileToY(profile[0]));
+  sctx.stroke();
+  sctx.shadowBlur = 0;
+
+  // Dots
+  for (let i = 0; i < N; i++) {
+    const x = posToX(i) + (posToX(1) - posToX(0)) / 2;
+    const y = profileToY(profile[i]);
+    const ratio = profile[i] / 3;
+    sctx.fillStyle = `hsl(${210 - ratio*90},80%,65%)`;
+    sctx.beginPath();
+    sctx.arc(x, y, 4*dpr, 0, Math.PI*2);
+    sctx.fill();
+  }
+
+  updateValCells();
+  updateCamSVG();
+}
+
+// Interaction
+let isDrawing = false;
+let lastPos = -1;
+
+function getCanvasPos(e) {
+  const rect = sc.getBoundingClientRect();
+  const cl = e.touches ? e.touches[0].clientX : e.clientX;
+  const ct = e.touches ? e.touches[0].clientY : e.clientY;
+  const x = (cl - rect.left) / rect.width * scW;
+  const y = (ct - rect.top)  / rect.height * scH;
+  return {x, y};
+}
+
+function handleStitchInput(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const {x, y} = getCanvasPos(e);
+  const pos = xToPos(x);
+  const val = yToProfile(y);
+
+  if (mode === 'smooth') {
+    // Smooth brush: affect neighbours too
+    for (let i = 0; i < N; i++) {
+      const dist = Math.min(Math.abs(i-pos), N-Math.abs(i-pos));
+      const w = Math.max(0, 1 - dist/2);
+      if (w > 0) profile[i] = +(Math.round((profile[i]*(1-w) + val*w) * 20) / 20).toFixed(2);
+    }
+  } else {
+    // Draw: if dragged, interpolate between last and current pos
+    if (lastPos >= 0 && lastPos !== pos) {
+      const steps = Math.abs(pos - lastPos);
+      for (let s = 0; s <= steps; s++) {
+        const ip = lastPos + (pos - lastPos) * s / steps;
+        const iv = Math.round(ip);
+        const t  = s / steps;
+        // we don't have a "lastVal" easily, just set current
+        profile[Math.round(ip)] = +(Math.round(val * 20) / 20).toFixed(2);
+      }
+    }
+    profile[pos] = +(Math.round(val * 20) / 20).toFixed(2);
+    lastPos = pos;
+  }
+  drawStitch();
+}
+
+sc.addEventListener('mousedown',  e => { isDrawing = true; lastPos = -1; handleStitchInput(e); });
+sc.addEventListener('mousemove',  handleStitchInput);
+sc.addEventListener('mouseup',    () => { isDrawing = false; lastPos = -1; });
+sc.addEventListener('mouseleave', () => { isDrawing = false; lastPos = -1; });
+sc.addEventListener('touchstart', e => { isDrawing = true; lastPos = -1; handleStitchInput(e); }, {passive:false});
+sc.addEventListener('touchmove',  handleStitchInput, {passive:false});
+sc.addEventListener('touchend',   () => { isDrawing = false; lastPos = -1; });
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-draw').classList.toggle('active', m==='draw');
+  document.getElementById('btn-smooth').classList.toggle('active', m==='smooth');
+}
+
+// Value cells below canvas
+function updateValCells() {
+  const row = document.getElementById('values-row');
+  row.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const d = document.createElement('div');
+    d.className = 'val-cell';
+    d.textContent = profile[i].toFixed(1);
+    d.title = `Position ${i} (${i*20}°): ${profile[i].toFixed(2)}`;
+    const ratio = profile[i] / 3;
+    d.style.color = `hsl(${210-ratio*90},70%,65%)`;
+    row.appendChild(d);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  CAM SVG
+// ══════════════════════════════════════════════════════
+function profileToXY(index, value) {
+  const angle = (index / N) * Math.PI * 2 - Math.PI / 2;
+  const r = (BASE_R + (value / 3) * THROW_R) * SCALE;
+  return { x: Math.cos(angle) * r, y: Math.sin(angle) * r };
+}
+
+function updateCamSVG() {
+  const fill    = document.getElementById('cam-fill');
+  const outline = document.getElementById('cam-outline');
+  const dots    = document.getElementById('profile-dots');
+  const ticks   = document.getElementById('angle-ticks');
+
+  // Build polygon points (interpolated per degree for smoothness)
+  let pts = [];
+  for (let deg = 0; deg < 360; deg += 2) {
+    const fi = deg / 360 * N;
+    const i0 = Math.floor(fi) % N;
+    const i1 = (i0 + 1) % N;
+    const t  = fi - Math.floor(fi);
+    const v  = profile[i0] * (1-t) + profile[i1] * t;
+    const angle = deg / 180 * Math.PI - Math.PI / 2;
+    const r = (BASE_R + (v / 3) * THROW_R) * SCALE;
+    pts.push(`${(Math.cos(angle)*r).toFixed(2)},${(Math.sin(angle)*r).toFixed(2)}`);
+  }
+  const ptStr = pts.join(' ');
+  fill.setAttribute('points', ptStr);
+  outline.setAttribute('points', ptStr);
+
+  // Dots at each position
+  dots.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const {x, y} = profileToXY(i, profile[i]);
+    const ratio = profile[i] / 3;
+    const col = `hsl(${210-ratio*90},80%,65%)`;
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', x.toFixed(2));
+    c.setAttribute('cy', y.toFixed(2));
+    c.setAttribute('r', '3');
+    c.setAttribute('fill', col);
+    c.setAttribute('stroke', '#0d1117');
+    c.setAttribute('stroke-width', '1');
+    dots.appendChild(c);
+  }
+
+  // Angle ticks
+  ticks.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const r1 = 105, r2 = 108;
+    const x1 = Math.cos(angle)*r1, y1 = Math.sin(angle)*r1;
+    const x2 = Math.cos(angle)*r2, y2 = Math.sin(angle)*r2;
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1.toFixed(1)); l.setAttribute('y1',y1.toFixed(1));
+    l.setAttribute('x2',x2.toFixed(1)); l.setAttribute('y2',y2.toFixed(1));
+    l.setAttribute('stroke','#30363d'); l.setAttribute('stroke-width','1');
+    ticks.appendChild(l);
+  }
+
+  // Stats
+  const minR = BASE_R + (Math.min(...profile)/3)*THROW_R;
+  const maxR = BASE_R + (Math.max(...profile)/3)*THROW_R;
+  document.getElementById('stat-min').textContent   = minR.toFixed(1)+'mm';
+  document.getElementById('stat-max').textContent   = maxR.toFixed(1)+'mm';
+  document.getElementById('stat-throw').textContent = (maxR-minR).toFixed(2)+'mm';
+}
+
+// ══════════════════════════════════════════════════════
+//  ICON EDITOR
+// ══════════════════════════════════════════════════════
+const ic = document.getElementById('icon-canvas');
+const ictx = ic.getContext('2d');
+const IGRID_X = 20, IGRID_Y = 8;
+// iconPoints: array of {x, y} in grid coords (0..IGRID_X-1, 0..IGRID_Y-1)
+// We store as a polyline path
+
+let iconPath = []; // array of [gx, gy]
+
+function cellW() { return ic.width / IGRID_X; }
+function cellH() { return ic.height / IGRID_Y; }
+
+function drawIcon() {
+  ictx.clearRect(0, 0, ic.width, ic.height);
+
+  // Background
+  ictx.fillStyle = '#0d1117';
+  ictx.fillRect(0, 0, ic.width, ic.height);
+
+  // Grid
+  ictx.strokeStyle = '#21262d';
+  ictx.lineWidth = 0.5;
+  for (let x = 0; x <= IGRID_X; x++) {
+    ictx.beginPath(); ictx.moveTo(x*cellW(),0); ictx.lineTo(x*cellW(),ic.height); ictx.stroke();
+  }
+  for (let y = 0; y <= IGRID_Y; y++) {
+    ictx.beginPath(); ictx.moveTo(0,y*cellH()); ictx.lineTo(ic.width,y*cellH()); ictx.stroke();
+  }
+
+  // Path
+  if (iconPath.length >= 2) {
+    ictx.strokeStyle = '#56d364';
+    ictx.lineWidth = 2.5;
+    ictx.lineCap = 'round';
+    ictx.lineJoin = 'round';
+    ictx.shadowColor = '#56d364';
+    ictx.shadowBlur = 6;
+    ictx.beginPath();
+    iconPath.forEach(([gx, gy], i) => {
+      const x = (gx + 0.5) * cellW();
+      const y = (gy + 0.5) * cellH();
+      i === 0 ? ictx.moveTo(x, y) : ictx.lineTo(x, y);
+    });
+    ictx.stroke();
+    ictx.shadowBlur = 0;
+
+    // Dots
+    iconPath.forEach(([gx, gy]) => {
+      ictx.fillStyle = '#56d364';
+      ictx.beginPath();
+      ictx.arc((gx+0.5)*cellW(), (gy+0.5)*cellH(), 3, 0, Math.PI*2);
+      ictx.fill();
+    });
+  }
+}
+
+function iconGridPos(e) {
+  const rect = ic.getBoundingClientRect();
+  const cl = e.touches ? e.touches[0].clientX : e.clientX;
+  const ct = e.touches ? e.touches[0].clientY : e.clientY;
+  const px = (cl - rect.left) / rect.width * ic.width;
+  const py = (ct - rect.top) / rect.height * ic.height;
+  return [Math.floor(px / cellW()), Math.floor(py / cellH())];
+}
+
+ic.addEventListener('mousedown', e => {
+  iconDrawing = true;
+  const gp = iconGridPos(e);
+  if (iconTool === 'erase') {
+    removeIconPoint(gp);
+  } else {
+    iconPath.push(gp);
+  }
+  drawIcon();
+});
+ic.addEventListener('mousemove', e => {
+  if (!iconDrawing) return;
+  const gp = iconGridPos(e);
+  if (iconTool === 'erase') {
+    removeIconPoint(gp);
+  } else {
+    const last = iconPath[iconPath.length-1];
+    if (!last || last[0] !== gp[0] || last[1] !== gp[1]) {
+      iconPath.push(gp);
+    }
+  }
+  drawIcon();
+});
+ic.addEventListener('mouseup',  () => iconDrawing = false);
+ic.addEventListener('mouseleave', () => iconDrawing = false);
+ic.addEventListener('touchstart', e => {
+  iconDrawing = true;
+  iconPath.push(iconGridPos(e));
+  drawIcon(); e.preventDefault();
+}, {passive:false});
+ic.addEventListener('touchmove', e => {
+  if (!iconDrawing) return;
+  const gp = iconGridPos(e);
+  const last = iconPath[iconPath.length-1];
+  if (!last || last[0]!==gp[0] || last[1]!==gp[1]) iconPath.push(gp);
+  drawIcon(); e.preventDefault();
+}, {passive:false});
+ic.addEventListener('touchend', () => iconDrawing = false);
+
+function removeIconPoint([gx, gy]) {
+  iconPath = iconPath.filter(([x,y]) => !(x===gx && y===gy));
+}
+
+function setIconTool(t) {
+  iconTool = t;
+  document.getElementById('itool-draw').classList.toggle('active', t==='draw');
+  document.getElementById('itool-erase').classList.toggle('active', t==='erase');
+}
+
+function clearIcon() { iconPath = []; drawIcon(); }
+
+function autoIcon() {
+  // Generate icon from stitch profile automatically
+  iconPath = [];
+  for (let i = 0; i < N; i++) {
+    const gx = Math.round(i / (N-1) * (IGRID_X-1));
+    const gy = Math.round((1 - profile[i]/3) * (IGRID_Y-1));
+    const last = iconPath[iconPath.length-1];
+    if (!last || last[0]!==gx || last[1]!==gy) {
+      iconPath.push([gx, gy]);
+    }
+  }
+  drawIcon();
+}
+
+// Convert grid icon to OpenSCAD normalised points
+function iconToSCAD() {
+  if (iconPath.length < 2) {
+    // Default zigzag icon
+    return [[-1,0.5],[0,0],[1,0.5]];
+  }
+  return iconPath.map(([gx, gy]) => [
+    +( (gx / (IGRID_X-1)) * 2 - 1 ).toFixed(3),
+    +( 1 - gy / (IGRID_Y-1) ).toFixed(3),
+  ]);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function render() {
+  drawStitch();
+  drawIcon();
+}
+
+// ══════════════════════════════════════════════════════
+//  PROFILE POLYGON (from JSON values to XY polygon)
+// ══════════════════════════════════════════════════════
+function profileToPolygonPoints() {
+  const pts = [];
+  // 18 angular positions × 2 vertices each (leading/trailing edge)
+  const step = 360 / N;
+  for (let i = 0; i < N; i++) {
+    const a0 = (i / N) * Math.PI * 2;
+    const a1 = ((i + 1) / N) * Math.PI * 2;
+    const r  = BASE_R + (profile[i] / 3) * THROW_R;
+    // Two points per segment at the same radius (stepped cam)
+    const offset = step / 2 * Math.PI / 180; // half-step inward
+    pts.push([
+      +(Math.sin(a0 + offset * 0.3) * r).toFixed(4),
+      +(Math.cos(a0 + offset * 0.3) * r).toFixed(4),
+    ]);
+    pts.push([
+      +(Math.sin(a1 - offset * 0.3) * r).toFixed(4),
+      +(Math.cos(a1 - offset * 0.3) * r).toFixed(4),
+    ]);
+  }
+  return pts;
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════════
+function getCamNum() {
+  const n = document.getElementById('cam-num').value.trim().padStart(2,'0');
+  return n || '35';
+}
+
+function getCamName() {
+  return document.getElementById('cam-name').value.trim() || 'Custom cam';
+}
+
+function buildJSON() {
+  const num  = getCamNum();
+  const name = getCamName();
+  const obj = {
+    cam: num,
+    name: name,
+    status: 'candidate',
+    profile_values_nominal_0_3: profile.map(v => +v.toFixed(2)),
+    profile_radius_base_mm: BASE_R,
+    profile_throw_measured_mm: THROW_R,
+    surface_mode: 'stepped',
+    icon_kind: 'custom',
+    generated_by: 'elna-cam-designer',
+    fixed_dimensions: {
+      overall_diameter_mm: 43.64,
+      overall_radius_mm: 21.82,
+      total_height_mm: 7.308,
+      body_top_height_mm: 6.999,
+      label_height_mm: 0.309,
+      lower_cam_lobe_height_mm: 4.499,
+      upper_round_body_radius_mm: 18.55,
+      functional_lobe_min_radius_mm: 18.55,
+      functional_lobe_max_radius_mm: 21.82,
+      functional_lobe_throw_mm: 3.27,
+      center_hole_radius_mm: 8.25,
+      center_counterbore_radius_mm: 9.5,
+      center_counterbore_height_mm: 1.5,
+      center_cone_height_mm: 1.5,
+      transport_slot_width_mm: 3.0,
+      transport_slot_length_mm: 4.1,
+      transport_slot_depth_mm: 5.5,
+      transport_slot_gap_from_counterbore_mm: 1.0,
+    }
+  };
+  return JSON.stringify(obj, null, 2);
+}
+
+function buildSCAD() {
+  const num  = getCamNum();
+  const name = getCamName();
+  const poly  = profileToPolygonPoints();
+  const icon  = iconToSCAD();
+
+  const polyStr = poly.map(([x,y]) => `        [${x}, ${y}]`).join(',\n');
+  const iconStr = icon.map(([x,y]) => `[${x},${y}]`).join(', ');
+
+  return `/*
+  Elna Supermatic cam ${num}
+  Name: ${name}
+  Status: candidate
+
+  Generated by Elna Cam Designer
+  https://github.com/qbarteczek/elna-supermatic-cams
+
+  Profile values (0.0–3.0, 18 positions):
+  ${profile.map((v,i) => `${i*20}°: ${v.toFixed(2)}`).join(' | ')}
+
+  License: GPL-3.0-or-later.
+*/
+
+include <../_elna_measured_common.scad>;
+
+profile_points = [
+${polyStr}
+];
+
+icon_points = [${iconStr}];
+
+elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="${num}");
+`;
+}
+
+function downloadText(content, filename) {
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+  a.download = filename;
+  a.click();
+}
+
+function showStatus() {
+  const el = document.getElementById('status-msg');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function exportJSON() { downloadText(buildJSON(), `cam_${getCamNum()}_profile.json`); showStatus(); }
+function exportSCAD() { downloadText(buildSCAD(), `cam_${getCamNum()}.scad`); showStatus(); }
+function exportBoth() { exportJSON(); setTimeout(exportSCAD, 100); }
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+window.addEventListener('resize', resizeStitchCanvas);
+applyPreset('zigzag');
+autoIcon();
+
+// Delay to let layout settle
+setTimeout(() => {
+  resizeStitchCanvas();
+  drawIcon();
+}, 50);
+</script>
+</body>
+</html>
