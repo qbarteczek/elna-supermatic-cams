@@ -1,177 +1,120 @@
-# Elna Supermatic Cam Discs — measured parametric models
+# Elna Supermatic Cam Discs — 3D Printable Replacements
 
 > **3D-printable replacement cam discs for the vintage Elna Supermatic sewing machine.**  
-> OpenSCAD parametric models for single cam discs, cams 01–34.
+> Parametric models for single cam discs, cams 01–34.
+
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Web%20Designer-success?style=flat-square&logo=github)
+![Status](https://img.shields.io/badge/Status-34%20Cams%20Generated-blue?style=flat-square)
 
 ---
 
-## What is this?
+## 🌟 Elna Supermatic Cam Designer
 
-The **Elna Supermatic** is a vintage Swiss sewing machine (produced ~1952–1970) that uses
-interchangeable plastic cam discs to produce decorative stitch patterns. Over time these discs
-break, warp, or get lost. This repository provides parametric
-[OpenSCAD](https://openscad.org/) models for 3D-printing replacement cams.
+We have built a dedicated **Web App** to let you easily draw, edit, and export your own custom stitches!
 
-The model set is based on a measured parametric base derived from uploaded reference STL/SCAD
-files for cam **03 / zigzag**.  
-The goal is to preserve the original Elna-style body, holes, height and top layout while
-changing only:
+**👉 [Open the Elna Cam Designer](https://qbarteczek.github.io/elna-supermatic-cams/tools/cam_designer/)**
 
-1. the lower functional cam edge,
-2. the cam number,
-3. the stitch pictogram.
+Features:
+- Draw stitch patterns on a 2D canvas (needle lateral position).
+- Generate smooth curves or stepped zig-zag profiles.
+- Draw the top icon pictogram (embossed on the disc).
+- **Export immediately to JSON and `.scad` formats** ready for 3D printing.
 
 ---
 
-## Prerequisites
+## 🖨️ 3D Models (Ready to Print)
 
-- **[OpenSCAD](https://openscad.org/)** 2021.01 or newer
-- **3D printer** capable of ≥ 0.1 mm layer height
-- **Recommended material:** PETG or rigid PLA (low flex, dimensionally stable)
+**You don't need OpenSCAD!** We have pre-rendered all 34 cams into `.stl` format.
+
+**👉 [Browse the `stls/` folder to download or view them in 3D directly on GitHub](stls/)**
+
+### Geometry V2 (Optimized for 3D Printing)
+The models in this repository feature our **V2 Geometry**, carefully modeled after original physical discs:
+1. **Domed Top:** The top surface is gently curved (domed) like the original discs.
+2. **Separate Bottom Ring:** The lower ring (rant) is rendered as a separate piece (`_ring`). This allows printing the cam flat on the print bed without messy supports. Simply superglue the ring to the bottom of the cam after printing!
+
+### Recommended Printing Settings
+- **Material:** PETG or rigid PLA (low flex, dimensionally stable).
+- **Layer height:** 0.10 mm to 0.15 mm.
+- **Orientation:** Print the main body flat on its top or bottom (depending on your printer's bridging capabilities), and print the ring flat.
+- **Assembly:** Clean up any stringing on the slot and hole, test the fit, and apply a small amount of superglue to attach the bottom ring.
 
 ---
 
-## Quick start
+## 🛠️ Modifying & Rendering
 
-1. Clone or download this repository.
-2. Open the reference cam in OpenSCAD:
-   ```text
-   models/measured_parametric_single_v1/cam_03.scad
-   ```
-3. Press **F6** to render, then **F7** to export STL.
-4. Compare with the grounded models listed below before printing others.
+If you want to modify the dimensions or use OpenSCAD manually:
+The core parametric logic lives in `models/measured_parametric_single_v1/_elna_measured_common.scad`.
 
----
-
-## Current status
-
-The most important folder is:
-
-```text
-models/measured_parametric_single_v1/
+**Command-line rendering:**
+You can render all 34 cams in batch by running our rendering script (requires OpenSCAD in the root directory or in your PATH):
+```bash
+./tools/render_all_stls.sh
 ```
 
-It contains generated `.scad` files for single cams `01–34`.
+---
+
+## 📖 Current Status
 
 See [docs/STATUS.md](docs/STATUS.md) for the full verification status of each cam.
 
-### Grounded / more reliable models
-
+### Grounded / More Reliable Models
 These models have the strongest basis:
-
 | Cam | Basis |
 |---:|---|
-| 03 | uploaded STL/SCAD reference cam |
-| 13 | known 18-position OpenSCAD profile |
-| 16 | known 18-position OpenSCAD profile |
-| 20 | known 18-position OpenSCAD profile |
-| 33 | known 18-position OpenSCAD profile |
+| **03** | uploaded STL/SCAD reference cam (Thingiverse) |
+| **13** | known 18-position OpenSCAD profile |
+| **16** | known 18-position OpenSCAD profile |
+| **20** | known 18-position OpenSCAD profile |
+| **33** | known 18-position OpenSCAD profile |
 
-Other cams are included as **candidate profiles**. They use the same measured base, but
-their outer functional edge still needs verification from real top-down photos, scans or
-original discs.
+Other cams are included as **candidate profiles**. They use the same measured base, but their outer functional edge still needs verification from real top-down photos or original discs.
 
 ---
 
-## Key dimensions
-
-Main dimensions are documented in:
-
-```text
-docs/DIMENSIONS_FROM_UPLOADED_FILES.md
-```
-
-| Parameter | Value |
-|---|---:|
-| Overall diameter | ~43.64 mm |
-| Overall height | 7.308 mm |
-| Lower cam lobe height | 4.499 mm |
-| Upper round body radius | ~18.55 mm |
-| Max functional lobe radius | ~21.82 mm |
-| Center hole radius | 8.25 mm |
-
----
-
-## Design rule
-
-**The body is fixed.** Only the functional edge, number and stitch icon should change between
-single cams.
-
-This avoids the earlier mistake of rebuilding the entire cam body and losing the Elna geometry.
-
----
-
-## File structure
+## 📁 File Structure
 
 ```text
 docs/
   DIMENSIONS_FROM_UPLOADED_FILES.md   ← measured dimensions reference
   MEASURED_PARAMETRIC_INDEX.md        ← index of all cams and their profiles
-  MEASUREMENT_PROTOCOL.md             ← how to measure a physical cam
   STATUS.md                           ← verification status per cam
 
 models/
   measured_parametric_single_v1/
-    _elna_measured_common.scad        ← shared parametric base (do not edit per-cam)
-    cam_01.scad
-    ...
-    cam_34.scad
-    profiles/
-      cam_01_profile.json
-      ...
-      cam_34_profile.json
+    _elna_measured_common.scad        ← shared parametric base (V2)
+    cam_XX.scad                       ← per-cam scripts (generated)
+    profiles/                         ← JSON data for the Web Designer
+
+stls/                                 ← High-resolution, ready-to-print STL files
+
+tools/                                ← Scripts and tools
+  cam_designer/                       ← The Web Application (HTML/JS)
+  render_all_stls.sh                  ← Bash script for batch rendering
+  regenerate_scad.py                  ← Script converting JSON profiles to SCAD
 
 photos/                               ← top-down reference photos
 prints/                               ← print test notes
 references/                           ← source STL/SCAD reference files
-tools/                                ← helper scripts
 ```
 
 ---
 
-## Rendering
+## ⚠️ Safety / Testing
 
-Open any `.scad` file in OpenSCAD and render/export STL.
-
-**Command-line rendering** (batch):
-
-```bash
-openscad -o output/cam_03.stl models/measured_parametric_single_v1/cam_03.scad
-```
-
----
-
-## Safety / testing
-
-> ⚠️ **These are mechanical parts for a sewing machine.**
+> **These are mechanical parts for a sewing machine.**
 
 Before using any printed cam:
-
 1. Inspect dimensions with calipers.
 2. Test fit without force.
 3. Rotate the machine **by hand** for several cycles.
 4. Test slowly at low speed.
 5. Only then try normal powered stitching.
 
-**Do not mark a cam as verified until it has been physically tested.**
-
 ---
 
-## Contributing
+## 🤝 Contributing & License
 
-Contributions are very welcome — especially:
-- top-down photos of original Elna Supermatic cams,
-- measured dimensions from physical discs,
-- confirmed stitch tests,
-- corrected profile JSON files.
+Contributions are very welcome — especially top-down photos of original cams, confirmed stitch tests, and corrected profile JSON files! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
----
-
-## License
-
-GPL-3.0-or-later.
-
-This repo builds on ideas and known profile data compatible with earlier GPL OpenSCAD work
-for Elna cam discs.
+**License:** GPL-3.0-or-later.
