@@ -1,0 +1,48 @@
+name: Render STL previews
+
+on:
+  push:
+    paths:
+      - 'models/**/*.scad'
+      - 'models/**/*.json'
+  pull_request:
+    paths:
+      - 'models/**/*.scad'
+      - 'models/**/*.json'
+  workflow_dispatch:
+
+jobs:
+  render-grounded-cams:
+    name: Render grounded cam STLs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install OpenSCAD
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y openscad xvfb
+
+      - name: Create output directory
+        run: mkdir -p output/stl
+
+      - name: Render grounded cams
+        run: |
+          CAMS="cam_03 cam_13 cam_16 cam_20 cam_33"
+          for cam in $CAMS; do
+            echo "Rendering $cam..."
+            xvfb-run openscad \
+              -o output/stl/${cam}.stl \
+              models/measured_parametric_single_v1/${cam}.scad \
+              && echo "  ✓ ${cam}.stl" \
+              || echo "  ✗ ${cam} FAILED"
+          done
+
+      - name: Upload STL artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stl-grounded-cams
+          path: output/stl/
+          retention-days: 30
