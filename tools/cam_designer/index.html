@@ -488,6 +488,15 @@
         <input class="field-input wide" id="cam-name" type="text" value="Custom cam" placeholder="My custom stitch">
       </div>
       <div class="export-sep"></div>
+      <div class="field-group">
+        <label>SCAD Type</label>
+        <div style="display: flex; gap: 10px; align-items: center; height: 32px; font-size: 12px; color: var(--text);">
+          <label style="display:flex; gap:4px; align-items:center; cursor:pointer;"><input type="radio" name="export-mode" value="assembly" checked> Assembly</label>
+          <label style="display:flex; gap:4px; align-items:center; cursor:pointer;"><input type="radio" name="export-mode" value="body"> Body</label>
+          <label style="display:flex; gap:4px; align-items:center; cursor:pointer;"><input type="radio" name="export-mode" value="ring"> Ring</label>
+        </div>
+      </div>
+      <div class="export-sep"></div>
       <button class="export-btn btn-json" onclick="exportJSON()">⬇ JSON</button>
       <button class="export-btn btn-scad" onclick="exportSCAD()">⬇ SCAD</button>
       <button class="export-btn btn-both" onclick="exportBoth()">⬇ Both files</button>
@@ -997,6 +1006,16 @@ function buildSCAD() {
   const polyStr = poly.map(([x,y]) => `        [${x}, ${y}]`).join(',\n');
   const iconStr = icon.map(([x,y]) => `[${x},${y}]`).join(', ');
 
+  const modeSel = document.querySelector('input[name="export-mode"]:checked');
+  const modType = modeSel ? modeSel.value : 'assembly';
+  
+  let moduleCall = `elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="${num}");`;
+  if (modType === 'body') {
+    moduleCall = `elna_cam_body(profile_points=profile_points, icon_points=icon_points, number_text="${num}");`;
+  } else if (modType === 'ring') {
+    moduleCall = `elna_cam_ring(profile_points=profile_points);`;
+  }
+
   return `/*
   Elna Supermatic cam ${num}
   Name: ${name}
@@ -1019,7 +1038,8 @@ ${polyStr}
 
 icon_points = [${iconStr}];
 
-elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="${num}");
+// Exporting: ${modType}
+${moduleCall}
 `;
 }
 

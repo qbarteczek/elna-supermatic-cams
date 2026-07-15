@@ -1,5 +1,6 @@
 # OpenSCAD exports — do not track generated STL/AMF/3MF/DXF files
 *.stl
+!stls/*.stl
 *.amf
 *.3mf
 *.dxf
@@ -46,3 +47,4 @@ desktop.ini
 *.tmp
 *.bak
 *.orig
+openscad.AppImage
