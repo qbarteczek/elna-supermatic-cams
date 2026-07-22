@@ -248,3 +248,24 @@ module elna_cam_body(profile_points, icon_points, number_text="03") {
 module elna_cam_ring(profile_points) {
     ring_only(profile_points=profile_points);
 }
+
+// Universal Ring — single universal bottom ring fitting ALL cams (01-34)
+module universal_ring() {
+    difference() {
+        cylinder(h=ring_h, r=body_r);
+        // Hollow center (shaft hole)
+        translate([0, 0, -cut_eps])
+            cylinder(h=ring_h + 2*cut_eps, r=center_hole_r);
+        // Lower widened bore
+        translate([0, 0, -cut_eps])
+            cylinder(h=counterbore_h + cut_eps, r=counterbore_r);
+        // Taper from bore to hole
+        translate([0, 0, counterbore_h - cut_eps])
+            cylinder(h=cone_h, r1=counterbore_r, r2=center_hole_r);
+        // Transport slot
+        translate([0, counterbore_r + transport_gap + transport_len/2,
+                   transport_depth/2 - cut_eps])
+            cube(size=[transport_w, transport_len, transport_depth], center=true);
+    }
+}
+

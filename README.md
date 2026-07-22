@@ -30,20 +30,20 @@ Features:
 
 ---
 
-### 🧩 Why the separate bottom ring (`_body` + `_ring`)? / Po co osobny pierścień?
+### 🌟 Recommended: Universal Bottom Ring / Uniwersalny Pierścień 🌟
 
-Original Elna Supermatic cams feature a lower flange/rant at the bottom ($1.2\text{ mm}$ height). Printing the disc in one piece requires **3D printing supports**, which leave a rough, uneven surface on the functional cam edge. The sewing machine follower lever requires a smooth, precise surface to glide without friction.
+Instead of downloading 34 different ring files, we provide a single **[universal_ring.stl](stls/universal_ring.stl)**!
 
-By splitting each cam into two parts:
-- **`cam_XX_body.stl`** (Main body): Has a flat recessed bottom. Prints flat on the bed **WITHOUT SUPPORTS** for maximum precision.
-- **`cam_XX_ring.stl`** (Bottom ring): A flat $1.2\text{ mm}$ washer. Prints flat on the bed in under 2 minutes.
+Because all 34 cams share the same base circle radius ($r = 18.55\text{ mm}$), shaft hole, and drive slot, **`universal_ring.stl` fits EVERY single cam (01–34)** perfectly without colliding with the machine's follower lever!
+
+**Pro Tip / Wskazówka:** Print 5 to 10 copies of `universal_ring.stl` in advance and store them in a small box. Whenever you want a new cam disc, simply 3D print `cam_XX_body.stl` and glue one universal ring to its bottom!
 
 ---
 
 ### 📖 Step-by-Step Guide / Instrukcja krok po kroku
 
 #### 1️⃣ Printing / Druk 3D
-- **Download:** Get both `cam_XX_body.stl` and `cam_XX_ring.stl` for your chosen cam (e.g. `cam_01_body.stl` and `cam_01_ring.stl`).
+- **Download:** Get `cam_XX_body.stl` for your chosen stitch (e.g., `cam_01_body.stl`) and **[universal_ring.stl](stls/universal_ring.stl)**.
 - **Slicer setup:** Place both parts **flat on the print bed**.
 - **Supports:** Set supports to **DISABLED (NONE)**.
 - **Material:** PETG or PLA (0.10 mm – 0.15 mm layer height for smooth curves).
@@ -51,7 +51,7 @@ By splitting each cam into two parts:
 #### 2️⃣ Assembly & Gluing / Składanie i Sklejanie
 - Flip `cam_XX_body` upside down (bottom surface facing up).
 - Place 2–3 small drops of **cyanoacrylate glue (Superglue / Kropelka)** into the bottom recess.
-- Press `cam_XX_ring` flush into the recess and hold for 10 seconds.
+- Press `universal_ring.stl` (or `cam_XX_ring.stl`) flush into the recess and hold for 10 seconds.
 - You now have a single, perfectly smooth, factory-accurate cam disc!
 
 #### 3️⃣ Machine Installation / Montaż w maszynie Elna Supermatic
@@ -61,7 +61,7 @@ By splitting each cam into two parts:
 - Rotate slightly until the rectangular transport slot aligns with the metal drive pin on the shaft.
 - Press down, close the lid, and you are ready to stitch!
 
-*(Note: If you still prefer printing the whole cam in a single piece with supports, `cam_XX.stl` is also provided).*
+*(Note: If you prefer printing the whole cam in a single piece with supports, `cam_XX.stl` is also provided).*
 
 ---
 
