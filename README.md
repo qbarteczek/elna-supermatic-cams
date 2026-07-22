@@ -51,7 +51,7 @@ Because all 34 cams share the same base circle radius ($r = 18.55\text{ mm}$), s
 #### 2️⃣ Assembly & Gluing / Składanie i Sklejanie
 - Flip `cam_XX_body` upside down (bottom surface facing up).
 - Place 2–3 small drops of **cyanoacrylate glue (Superglue / Kropelka)** into the bottom recess.
-- Press `universal_ring.stl` (or `cam_XX_ring.stl`) flush into the recess and hold for 10 seconds.
+- Press **[universal_ring.stl](stls/universal_ring.stl)** flush into the recess and hold for 10 seconds.
 - You now have a single, perfectly smooth, factory-accurate cam disc!
 
 #### 3️⃣ Machine Installation / Montaż w maszynie Elna Supermatic

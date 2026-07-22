@@ -101,12 +101,7 @@ icon_points = {icon_str};
         with open(os.path.join(scad_dir, f"cam_{cam}_body.scad"), 'w') as f:
             f.write(out_scad_body)
 
-        # 3. Separate Bottom Ring
-        out_scad_ring = base_header + f'\nelna_cam_ring(profile_points=profile_points);\n'
-        with open(os.path.join(scad_dir, f"cam_{cam}_ring.scad"), 'w') as f:
-            f.write(out_scad_ring)
-
-    print("Regenerated all SCAD files (full, body, ring).")
+    print("Regenerated all SCAD files (full, body).")
 
 if __name__ == '__main__':
     main()
