@@ -22,22 +22,46 @@ Features:
 
 ---
 
-## 🖨️ 3D Models (Ready to Print)
+## 🖨️ 3D Models & Printing Guide (Ready to Print)
 
 **You don't need OpenSCAD!** We have pre-rendered all 34 cams into `.stl` format.
 
 **👉 [Browse the `stls/` folder to download or view them in 3D directly on GitHub](stls/)**
 
-### Geometry V2 (Optimized for 3D Printing)
-The models in this repository feature our **V2 Geometry**, carefully modeled after original physical discs:
-1. **Domed Top:** The top surface is gently curved (domed) like the original discs.
-2. **Separate Bottom Ring:** The lower ring (rant) is rendered as a separate piece (`_ring`). This allows printing the cam flat on the print bed without messy supports. Simply superglue the ring to the bottom of the cam after printing!
+---
 
-### Recommended Printing Settings
-- **Material:** PETG or rigid PLA (low flex, dimensionally stable).
-- **Layer height:** 0.10 mm to 0.15 mm.
-- **Orientation:** Print the main body flat on its top or bottom (depending on your printer's bridging capabilities), and print the ring flat.
-- **Assembly:** Clean up any stringing on the slot and hole, test the fit, and apply a small amount of superglue to attach the bottom ring.
+### 🧩 Why the separate bottom ring (`_body` + `_ring`)? / Po co osobny pierścień?
+
+Original Elna Supermatic cams feature a lower flange/rant at the bottom ($1.2\text{ mm}$ height). Printing the disc in one piece requires **3D printing supports**, which leave a rough, uneven surface on the functional cam edge. The sewing machine follower lever requires a smooth, precise surface to glide without friction.
+
+By splitting each cam into two parts:
+- **`cam_XX_body.stl`** (Main body): Has a flat recessed bottom. Prints flat on the bed **WITHOUT SUPPORTS** for maximum precision.
+- **`cam_XX_ring.stl`** (Bottom ring): A flat $1.2\text{ mm}$ washer. Prints flat on the bed in under 2 minutes.
+
+---
+
+### 📖 Step-by-Step Guide / Instrukcja krok po kroku
+
+#### 1️⃣ Printing / Druk 3D
+- **Download:** Get both `cam_XX_body.stl` and `cam_XX_ring.stl` for your chosen cam (e.g. `cam_01_body.stl` and `cam_01_ring.stl`).
+- **Slicer setup:** Place both parts **flat on the print bed**.
+- **Supports:** Set supports to **DISABLED (NONE)**.
+- **Material:** PETG or PLA (0.10 mm – 0.15 mm layer height for smooth curves).
+
+#### 2️⃣ Assembly & Gluing / Składanie i Sklejanie
+- Flip `cam_XX_body` upside down (bottom surface facing up).
+- Place 2–3 small drops of **cyanoacrylate glue (Superglue / Kropelka)** into the bottom recess.
+- Press `cam_XX_ring` flush into the recess and hold for 10 seconds.
+- You now have a single, perfectly smooth, factory-accurate cam disc!
+
+#### 3️⃣ Machine Installation / Montaż w maszynie Elna Supermatic
+- Open the top cover of your Elna Supermatic machine.
+- Hold the assembled cam with the **numbers & stitch diagram facing UP** (glued ring at the bottom).
+- Place the cam onto the vertical shaft.
+- Rotate slightly until the rectangular transport slot aligns with the metal drive pin on the shaft.
+- Press down, close the lid, and you are ready to stitch!
+
+*(Note: If you still prefer printing the whole cam in a single piece with supports, `cam_XX.stl` is also provided).*
 
 ---
 
