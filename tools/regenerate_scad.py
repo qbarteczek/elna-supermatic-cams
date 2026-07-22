@@ -19,7 +19,6 @@ def generate_stepped_points(values):
         a1 = ((i + 1) / N_local) * math.pi * 2
         r = BASE_R + (values[i] / 3.0) * THROW_R
         offset = (step / 2.0) * (math.pi / 180.0)
-        # We step inward by offset*0.3 to avoid exact colinearity which might break geometry
         pts.append((math.sin(a0 + offset * 0.3) * r, math.cos(a0 + offset * 0.3) * r))
         pts.append((math.sin(a1 - offset * 0.3) * r, math.cos(a1 - offset * 0.3) * r))
     return pts
@@ -27,14 +26,12 @@ def generate_stepped_points(values):
 def generate_smooth_points(values):
     pts = []
     N_local = len(values)
-    # 2 degrees step for smooth curve
     for deg in range(0, 360, 2):
         fi = (deg / 360.0) * N_local
         i0 = int(math.floor(fi)) % N_local
         i1 = (i0 + 1) % N_local
         t = fi - math.floor(fi)
         
-        # Smooth cosine interpolation
         t_smooth = (1 - math.cos(t * math.pi)) / 2
         v = values[i0] * (1 - t_smooth) + values[i1] * t_smooth
         
@@ -76,7 +73,7 @@ def main():
         pts_str = ",\n".join([f"        [{x:.4f}, {y:.4f}]" for x, y in pts])
         icon_str = icons.get(cam, "[[-1,0.5],[0,0],[1,0.5]]")
         
-        out_scad = f"""/*
+        base_header = f"""/*
   Elna Supermatic cam {cam}
   Name: {name}
   Status: {status}
@@ -92,13 +89,24 @@ profile_points = [
 ];
 
 icon_points = {icon_str};
-
-elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="{cam}");
 """
-        scad_path = os.path.join(scad_dir, f"cam_{cam}.scad")
-        with open(scad_path, 'w') as f:
-            f.write(out_scad)
-    print("Regenerated all SCAD files.")
+
+        # 1. Full assembly
+        out_scad_full = base_header + f'\nelna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="{cam}");\n'
+        with open(os.path.join(scad_dir, f"cam_{cam}.scad"), 'w') as f:
+            f.write(out_scad_full)
+
+        # 2. Printable Body (no ring)
+        out_scad_body = base_header + f'\nelna_cam_body(profile_points=profile_points, icon_points=icon_points, number_text="{cam}");\n'
+        with open(os.path.join(scad_dir, f"cam_{cam}_body.scad"), 'w') as f:
+            f.write(out_scad_body)
+
+        # 3. Separate Bottom Ring
+        out_scad_ring = base_header + f'\nelna_cam_ring(profile_points=profile_points);\n'
+        with open(os.path.join(scad_dir, f"cam_{cam}_ring.scad"), 'w') as f:
+            f.write(out_scad_ring)
+
+    print("Regenerated all SCAD files (full, body, ring).")
 
 if __name__ == '__main__':
     main()

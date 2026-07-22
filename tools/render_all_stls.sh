@@ -3,7 +3,7 @@ set -e
 
 mkdir -p stls
 
-echo "Starting headless OpenSCAD rendering of 34 cams..."
+echo "Starting headless OpenSCAD rendering of all cam STL models (body, ring, full)..."
 
 ls models/measured_parametric_single_v1/cam_*.scad | xargs -n 1 -P 4 -I {} bash -c '
   cam=$(basename "{}" .scad)
