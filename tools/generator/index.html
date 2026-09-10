@@ -11,9 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Three.js + OrbitControls -->
+  <!-- Three.js + OrbitControls + STLLoader -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 
   <style>
     :root {
@@ -218,6 +219,168 @@
       background: rgba(6, 182, 212, 0.15);
       color: #38bdf8;
       border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    /* --- Pasek narzędziowy i przełączniki 3D --- */
+    .three-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+      padding: 0.45rem 0.75rem;
+      background: rgba(14, 21, 34, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+    }
+
+    .three-option-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .three-option-label {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pill-selector {
+      display: flex;
+      background: rgba(6, 9, 14, 0.85);
+      padding: 2px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+    }
+
+    .pill-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .pill-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .pill-btn.active {
+      background: rgba(16, 185, 129, 0.25);
+      color: #34d399;
+      font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .select-compact {
+      background: rgba(6, 9, 14, 0.85);
+      color: #e2e8f0;
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 0.28rem 0.6rem;
+      font-size: 0.76rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+    .select-compact:focus {
+      border-color: var(--accent-elna);
+    }
+
+    .badge-source {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.18rem 0.55rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge-source-stl {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .badge-source-param {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .stl-loading-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(52, 211, 153, 0.3);
+      border-top-color: #34d399;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Dropdown dla pobierania STL */
+    .btn-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .btn-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 0.35rem;
+      background: #0e1626;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      z-index: 1000;
+      min-width: 250px;
+      overflow: hidden;
+    }
+    .btn-dropdown-menu.show {
+      display: block;
+    }
+    .btn-dropdown-item {
+      padding: 0.6rem 0.85rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.15s;
+    }
+    .btn-dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .btn-dropdown-item:hover {
+      background: rgba(16, 185, 129, 0.15);
+    }
+    .btn-dropdown-item b {
+      color: #f8fafc;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-dropdown-item span {
+      color: var(--text-muted);
+      font-size: 0.72rem;
     }
 
     /* --- Kontener 3D Three.js --- */
@@ -676,9 +839,25 @@
       </div>
 
       <div class="header-actions">
-        <button id="downloadStlBtn" class="btn btn-stl" title="Pobierz gotowy plik STL do natychmiastowego druku 3D">
-          💾 Pobierz STL do druku 3D
-        </button>
+        <div class="btn-dropdown-wrapper">
+          <button id="downloadStlBtn" class="btn btn-stl" title="Pobierz gotowy plik STL do druku 3D">
+            💾 Pobierz STL do druku 3D ▾
+          </button>
+          <div id="stlDropdownMenu" class="btn-dropdown-menu">
+            <div class="btn-dropdown-item" id="dlOptionAssembly">
+              <b>💾 Całość (Assembly .stl)</b>
+              <span>Kompletny dysk z dolnym rantem</span>
+            </div>
+            <div class="btn-dropdown-item" id="dlOptionBody">
+              <b>💾 Korpus (Body .stl)</b>
+              <span>Zalecany do druku bez podpór (płaskie dno v2)</span>
+            </div>
+            <div class="btn-dropdown-item" id="dlOptionRing">
+              <b>💾 Pierścień dolny (Universal Ring .stl)</b>
+              <span>Uniwersalny pierścień dociskowy 1.2 mm</span>
+            </div>
+          </div>
+        </div>
         <button id="downloadScadBtn" class="btn btn-secondary" title="Pobierz plik źródłowy OpenSCAD">
           📐 Pobierz .scad
         </button>
@@ -713,6 +892,28 @@
           <span id="activeCamHeader" style="font-family: 'JetBrains Mono'; color: #34d399; font-size: 0.85rem;">Krzywka 03</span>
         </div>
 
+        <!-- Pasek wyboru elementu i stylu materiału -->
+        <div class="three-top-bar">
+          <div class="three-option-group">
+            <span class="three-option-label">Komponent:</span>
+            <div class="pill-selector" id="partSelector">
+              <button class="pill-btn active" data-part="assembly" title="Pełny dysk z dolnym rantem">Całość (Assembly)</button>
+              <button class="pill-btn" data-part="body" title="Korpus v2 do druku bez podpór (płaski spód)">Korpus (Body v2)</button>
+              <button class="pill-btn" data-part="ring" title="Osobny uniwersalny pierścień dolny">Pierścień (Ring)</button>
+            </div>
+          </div>
+
+          <div class="three-option-group">
+            <span class="three-option-label">Wykończenie:</span>
+            <select id="materialSelect" class="select-compact" title="Wybierz styl wizualny i materiał dysku">
+              <option value="bakelite" selected>🖤 Klasyczny Bakelit (Elna Original)</option>
+              <option value="elna_green">🟢 Zieleń Elna (Swiss Emerald)</option>
+              <option value="print_3d">🔵 Wydruk 3D (Silk PLA/PETG)</option>
+              <option value="two_tone">🌓 Montaż 2-kolorowy (Body + Ring)</option>
+            </select>
+          </div>
+        </div>
+
         <div class="three-wrapper">
           <div id="threeContainer"></div>
 
@@ -726,12 +927,12 @@
             <button id="resetCameraBtn" class="btn-icon-tiny" title="Zresetuj kamerę">🎯</button>
           </div>
 
-          <!-- Pomiary HUD -->
+          <!-- Pomiary HUD & Status geometrii -->
           <div class="three-hud-info">
+            <span id="modelSourceBadge" class="badge-source badge-source-stl">🟢 STL wydruku (OpenSCAD)</span>
             <span>⌀ <b>43.64 mm</b></span>
-            <span>Wysokość: <b>7.31 mm</b></span>
+            <span>Wys.: <b>7.31 mm</b></span>
             <span>Skok: <b>3.27 mm</b></span>
-            <span>Otwór: <b>16.5 mm</b></span>
             <span>Zabierak: <b>3.0×4.1 mm</b></span>
           </div>
         </div>
@@ -1096,6 +1297,7 @@
         // Zaokrąglenie do 0.25 dla wygody
         let snapVal = Math.round(relY * 3.0 * 4) / 4;
         currentCam.values[stepIdx] = snapVal;
+        isCustomModified = true;
         updateStepBars();
         updateThreeMesh();
         drawFabricSimulation();
@@ -1229,6 +1431,15 @@
     let scene, camera, renderer, controls, camMeshGroup;
     let autoRotate = true;
     let wireframeMode = false;
+    let currentPart = "assembly"; // "assembly", "body", "ring"
+    let currentMaterialStyle = "bakelite"; // "bakelite", "elna_green", "print_3d", "two_tone"
+    let isCustomModified = false;
+    const stlCache = new Map();
+    let stlLoader = null;
+
+    // Stałe konstrukcyjne v2 (zgodne z _elna_measured_common.scad)
+    const DOME_CROWN = 1.500;
+    const RING_H = 1.200;
 
     function initThreeJS() {
       const container = document.getElementById('threeContainer');
@@ -1236,13 +1447,18 @@
       const height = container.clientHeight || 420;
 
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
       camera.position.set(40, 32, 55);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if (renderer.toneMapping !== undefined) {
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+      }
       container.appendChild(renderer.domElement);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -1251,17 +1467,25 @@
       controls.autoRotate = autoRotate;
       controls.autoRotateSpeed = 1.5;
 
-      // Oświetlenie
+      // Oświetlenie studyjne
       const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
       scene.add(ambLight);
 
-      const dirLight1 = new THREE.DirectionalLight(0x34d399, 1.2);
-      dirLight1.position.set(45, 60, 45);
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.25);
+      dirLight1.position.set(45, 65, 45);
       scene.add(dirLight1);
 
-      const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.75);
-      dirLight2.position.set(-45, -30, -45);
+      const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.5);
+      dirLight2.position.set(-45, -25, -45);
       scene.add(dirLight2);
+
+      const rimLight = new THREE.DirectionalLight(0x34d399, 0.5);
+      rimLight.position.set(0, 50, -60);
+      scene.add(rimLight);
+
+      if (typeof THREE.STLLoader !== 'undefined') {
+        stlLoader = new THREE.STLLoader();
+      }
 
       updateThreeMesh();
 
@@ -1289,18 +1513,83 @@
       }
     }
 
+    // --- Materiały dopasowane do rzeczywistych dysków Elna i druku 3D ---
+    function getCamMaterial(style, isMarking = false, isRing = false) {
+      if (style === 'bakelite') {
+        if (isMarking) {
+          return new THREE.MeshStandardMaterial({
+            color: 0xf3f4f6,
+            roughness: 0.35,
+            metalness: 0.1,
+            wireframe: wireframeMode
+          });
+        }
+        return new THREE.MeshStandardMaterial({
+          color: isRing ? 0x111315 : 0x1e2227,
+          roughness: 0.38,
+          metalness: 0.12,
+          wireframe: wireframeMode
+        });
+      } else if (style === 'elna_green') {
+        if (isMarking) {
+          return new THREE.MeshStandardMaterial({
+            color: 0x6ee7b7,
+            roughness: 0.3,
+            metalness: 0.1,
+            wireframe: wireframeMode
+          });
+        }
+        return new THREE.MeshStandardMaterial({
+          color: isRing ? 0x047857 : 0x059669,
+          roughness: 0.34,
+          metalness: 0.22,
+          wireframe: wireframeMode
+        });
+      } else if (style === 'print_3d') {
+        if (isMarking) {
+          return new THREE.MeshStandardMaterial({
+            color: 0x7dd3fc,
+            roughness: 0.4,
+            metalness: 0.15,
+            wireframe: wireframeMode
+          });
+        }
+        return new THREE.MeshStandardMaterial({
+          color: isRing ? 0x0369a1 : 0x0284c7,
+          roughness: 0.46,
+          metalness: 0.26,
+          wireframe: wireframeMode
+        });
+      } else if (style === 'two_tone') {
+        if (isMarking) {
+          return new THREE.MeshStandardMaterial({
+            color: 0xf8fafc,
+            roughness: 0.3,
+            metalness: 0.1,
+            wireframe: wireframeMode
+          });
+        }
+        return new THREE.MeshStandardMaterial({
+          color: isRing ? 0x0f172a : 0x059669,
+          roughness: 0.36,
+          metalness: 0.18,
+          wireframe: wireframeMode
+        });
+      }
+      return new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.35, metalness: 0.25, wireframe: wireframeMode });
+    }
+
     // ==============================================================================
-    // GENEROWANIE SZCZELNEJ GEOMETRII 3D (2-MANIFOLD WATERTIGHT MESH)
+    // GENEROWANIE DOKŁADNEJ GEOMETRII PARAMETRYCZNEJ 3D (Z KOPUŁKĄ, ZABIERAKIEM I RANTEM)
     // ==============================================================================
-    function generateCamGeometry() {
-      const N = 144; // 144 / 18 = 8 podziałów na krok
+    function generateCamGeometry(targetPart = currentPart) {
+      const N = 144;
       const values = currentCam.values;
       const mode = currentCam.mode;
 
-      // Tablica promieni dla N kątów
-      const radii = new Float32Array(N);
       const cosA = new Float32Array(N);
       const sinA = new Float32Array(N);
+      const radii = new Float32Array(N);
 
       for (let i = 0; i < N; i++) {
         const a = i * 2.0 * Math.PI / N;
@@ -1317,37 +1606,70 @@
         radii[i] = BASE_R + (v / 3.0) * THROW;
       }
 
-      // Pierścienie Z
-      // Ring 0: Z=0, R=radii[i] (dno wieńca)
-      // Ring 1: Z=4.499, R=radii[i] (szczyt wieńca)
-      // Ring 2: Z=4.499, R=BASE_R (wewnętrzna krawędź uskoku)
-      // Ring 3: Z=6.999, R=BASE_R (góra korpusu)
-      // Ring 4: Z=6.999, R=CENTER_HOLE_R (otwór wałka góra)
-      // Ring 5: Z=3.000, R=CENTER_HOLE_R (koniec cylindra / początek stożka)
-      // Ring 6: Z=1.500, R=COUNTERBORE_R (początek counterbore / koniec stożka)
-      // Ring 7: Z=0.000, R=COUNTERBORE_R (dno counterbore)
+      // Geometria w zależności od targetPart:
+      // 1. "ring" - sam pierścień uniwersalny (z=0 .. 1.2, r=BASE_R lub radii)
+      // 2. "body" - korpus v2 bez pierścienia (z=RING_H .. BODY_TOP_H + dome)
+      // 3. "assembly" - pełny dysk z rantem dolnym (z=0 .. BODY_TOP_H + dome)
 
-      const numRings = 8;
+      if (targetPart === 'ring') {
+        return generateUniversalRingGeometry(N, cosA, sinA);
+      }
+
+      const zStart = (targetPart === 'body') ? RING_H : 0.0;
+      const zLobeTop = LOBE_H;
+      const zBodyTop = BODY_TOP_H;
+
+      // Promień sfery kopułki wg OpenSCAD:
+      // dome_r_sphere = (body_r^2 + dome_crown^2) / (2*dome_crown) = (18.55^2 + 1.5^2)/(3) ~ 115.8 mm
+      const dome_r_sphere = (BASE_R * BASE_R + DOME_CROWN * DOME_CROWN) / (2 * DOME_CROWN);
+      const dome_base_z = zBodyTop - (dome_r_sphere - DOME_CROWN);
+
+      function calcDomeZ(r) {
+        if (r >= BASE_R) return zBodyTop;
+        const diff = dome_r_sphere * dome_r_sphere - r * r;
+        return (diff > 0) ? (dome_base_z + Math.sqrt(diff)) : zBodyTop;
+      }
+
+      // Pierścienie Z (współrzędne cylindryczne)
+      // Ring 0: dno (Z=zStart, R=radii)
+      // Ring 1: uskok wieńca dół (Z=zLobeTop, R=radii)
+      // Ring 2: uskok wieńca góra/korpus (Z=zLobeTop, R=BASE_R)
+      // Ring 3: górna krawędź korpusu (Z=zBodyTop, R=BASE_R)
+      // Ring 4: zewnętrzny wypukły rant referencyjny (Z=calcDomeZ(18.1), R=18.1)
+      // Ring 5: pośredni pierścień kopułki (Z=calcDomeZ(14.0), R=14.0)
+      // Ring 6: kołnierz wokół osi zewnętrzny (Z=calcDomeZ(10.3) + 0.45, R=10.3)
+      // Ring 7: kołnierz wokół osi wewnętrzny (Z=calcDomeZ(8.6) + 0.45, R=8.6)
+      // Ring 8: krawędź otworu wałka na szczycie (Z=calcDomeZ(CENTER_HOLE_R), R=CENTER_HOLE_R)
+      // Ring 9: otwór wałka cylinder (Z=3.0, R=CENTER_HOLE_R)
+      // Ring 10: koniec stożka / początek counterbore (Z=1.5, R=COUNTERBORE_R)
+      // Ring 11: dno counterbore (Z=zStart, R=COUNTERBORE_R)
+
+      const numRings = 12;
       const positions = new Float32Array(numRings * N * 3);
       let pIdx = 0;
 
-      function setRing(rArray, z) {
+      function setRingR(rArray, zArrayOrNumber) {
         for (let i = 0; i < N; i++) {
           let r = (typeof rArray === 'number') ? rArray : rArray[i];
+          let z = (typeof zArrayOrNumber === 'number') ? zArrayOrNumber : zArrayOrNumber(r);
           positions[pIdx++] = r * cosA[i];
           positions[pIdx++] = r * sinA[i];
           positions[pIdx++] = z;
         }
       }
 
-      setRing(radii, 0.0);             // Ring 0
-      setRing(radii, LOBE_H);           // Ring 1
-      setRing(BASE_R, LOBE_H);          // Ring 2
-      setRing(BASE_R, BODY_TOP_H);      // Ring 3
-      setRing(CENTER_HOLE_R, BODY_TOP_H); // Ring 4
-      setRing(CENTER_HOLE_R, 3.0);      // Ring 5
-      setRing(COUNTERBORE_R, COUNTERBORE_H); // Ring 6
-      setRing(COUNTERBORE_R, 0.0);      // Ring 7
+      setRingR(radii, zStart);                              // 0: dno wieńca
+      setRingR(radii, zLobeTop);                             // 1: szczyt wieńca
+      setRingR(BASE_R, zLobeTop);                            // 2: uskok korpusu
+      setRingR(BASE_R, zBodyTop);                            // 3: krawędź korpusu
+      setRingR(18.10, r => calcDomeZ(r) + 0.22);             // 4: rant referencyjny
+      setRingR(14.00, r => calcDomeZ(r));                    // 5: kopułka środkowa
+      setRingR(10.30, r => calcDomeZ(r) + 0.45);             // 6: kołnierz wałka zewn.
+      setRingR(8.60,  r => calcDomeZ(r) + 0.45);             // 7: kołnierz wałka wewn.
+      setRingR(CENTER_HOLE_R, r => calcDomeZ(r));            // 8: szczyt otworu
+      setRingR(CENTER_HOLE_R, 3.0);                          // 9: cylindryczny otwór
+      setRingR(COUNTERBORE_R, COUNTERBORE_H);                // 10: stożek / counterbore
+      setRingR(COUNTERBORE_R, zStart);                       // 11: dno counterbore
 
       const indices = [];
       function addQuad(v1, v2, v3, v4) {
@@ -1355,52 +1677,41 @@
         indices.push(v1, v3, v4);
       }
 
-      // 1. Płaszcz wieńca roboczego (Ring 0 -> Ring 1, na zewnątrz)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(0*N + i, 0*N + nxt, 1*N + nxt, 1*N + i);
+      for (let r = 0; r < 7; r++) {
+        for (let i = 0; i < N; i++) {
+          let nxt = (i + 1) % N;
+          addQuad(r * N + i, r * N + nxt, (r + 1) * N + nxt, (r + 1) * N + i);
+        }
       }
 
-      // 2. Uskok wieńca na Z=4.499 (Ring 1 -> Ring 2, normalna +Z)
+      // Przejście z Ring 7 do Ring 8 (otwór wałka)
       for (let i = 0; i < N; i++) {
         let nxt = (i + 1) % N;
-        addQuad(1*N + i, 1*N + nxt, 2*N + nxt, 2*N + i);
+        addQuad(7 * N + i, 7 * N + nxt, 8 * N + nxt, 8 * N + i);
       }
 
-      // 3. Korpus cylindryczny górny (Ring 2 -> Ring 3, na zewnątrz)
+      // Wewnętrzny otwór osi (od Ring 8 do Ring 9, normalna do środka)
       for (let i = 0; i < N; i++) {
         let nxt = (i + 1) % N;
-        addQuad(2*N + i, 2*N + nxt, 3*N + nxt, 3*N + i);
+        addQuad(8 * N + i, 9 * N + i, 9 * N + nxt, 8 * N + nxt);
       }
 
-      // 4. Górna ścianka czołowa na Z=7.0 (Ring 3 -> Ring 4, normalna +Z)
+      // Stożkowe rozszerzenie 3.0 -> 1.5 mm (Ring 9 -> Ring 10, do środka)
       for (let i = 0; i < N; i++) {
         let nxt = (i + 1) % N;
-        addQuad(3*N + i, 3*N + nxt, 4*N + nxt, 4*N + i);
+        addQuad(9 * N + i, 10 * N + i, 10 * N + nxt, 9 * N + nxt);
       }
 
-      // 5. Wewnętrzny otwór osi Z=7.0 .. 3.0 (Ring 4 -> Ring 5, do środka)
+      // Podtoczenie dolne counterbore 1.5 -> zStart (Ring 10 -> Ring 11)
       for (let i = 0; i < N; i++) {
         let nxt = (i + 1) % N;
-        addQuad(4*N + i, 5*N + i, 5*N + nxt, 4*N + nxt);
+        addQuad(10 * N + i, 11 * N + i, 11 * N + nxt, 10 * N + nxt);
       }
 
-      // 6. Stożkowe przejście Z=3.0 .. 1.5 (Ring 5 -> Ring 6, do środka)
+      // Dno dolne (Ring 11 -> Ring 0, normalna w dół)
       for (let i = 0; i < N; i++) {
         let nxt = (i + 1) % N;
-        addQuad(5*N + i, 6*N + i, 6*N + nxt, 5*N + nxt);
-      }
-
-      // 7. Counterbore Z=1.5 .. 0.0 (Ring 6 -> Ring 7, do środka)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(6*N + i, 7*N + i, 7*N + nxt, 6*N + nxt);
-      }
-
-      // 8. Dno dolne na Z=0.0 (Ring 7 -> Ring 0, normalna -Z)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(7*N + i, 7*N + nxt, 0*N + nxt, 0*N + i);
+        addQuad(11 * N + i, 11 * N + nxt, 0 * N + nxt, 0 * N + i);
       }
 
       const geometry = new THREE.BufferGeometry();
@@ -1411,37 +1722,276 @@
       return geometry;
     }
 
+    // Geometria uniwersalnego pierścienia dolnego (universal_ring.scad)
+    function generateUniversalRingGeometry(N, cosA, sinA) {
+      const numRings = 4;
+      const positions = new Float32Array(numRings * N * 3);
+      let pIdx = 0;
+
+      function setR(r, z) {
+        for (let i = 0; i < N; i++) {
+          positions[pIdx++] = r * cosA[i];
+          positions[pIdx++] = r * sinA[i];
+          positions[pIdx++] = z;
+        }
+      }
+
+      setR(BASE_R, 0.0);             // 0: spód zewnętrzny
+      setR(BASE_R, RING_H);          // 1: góra zewnętrzna
+      setR(CENTER_HOLE_R, RING_H);   // 2: góra otwór
+      setR(COUNTERBORE_R, 0.0);      // 3: dno counterbore
+
+      const indices = [];
+      function addQuad(v1, v2, v3, v4) {
+        indices.push(v1, v2, v3);
+        indices.push(v1, v3, v4);
+      }
+
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        // Płaszcz zewn
+        addQuad(0 * N + i, 0 * N + nxt, 1 * N + nxt, 1 * N + i);
+        // Górne czoło
+        addQuad(1 * N + i, 1 * N + nxt, 2 * N + nxt, 2 * N + i);
+        // Otwór wewn stożkowy do z=0
+        addQuad(2 * N + i, 3 * N + i, 3 * N + nxt, 2 * N + nxt);
+        // Dno
+        addQuad(3 * N + i, 3 * N + nxt, 0 * N + nxt, 0 * N + i);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    // Tekstura canvas 1024x1024 dla realistycznych przetłoczeń (SWISS MADE, numer, piktogram, ząbki)
+    function createDomeMarkingsTexture(camNumber, iconKind, style) {
+      const cvs = document.createElement('canvas');
+      cvs.width = 1024;
+      cvs.height = 1024;
+      const ctx = cvs.getContext('2d');
+
+      ctx.clearRect(0, 0, 1024, 1024);
+
+      const center = 512;
+      const scale = 512 / BASE_R; // px na mm
+
+      // Kolory oznaczeń
+      const markColor = (style === 'bakelite') ? '#f3f4f6' : (style === 'elna_green' ? '#6ee7b7' : '#e0f2fe');
+      ctx.fillStyle = markColor;
+      ctx.strokeStyle = markColor;
+
+      // 1. Numer krzywki w okrągłym medalionie na [11.55, -7.25]
+      const bX = center + 11.55 * scale;
+      const bY = center + 7.25 * scale;
+      ctx.lineWidth = 0.55 * scale;
+      ctx.beginPath();
+      ctx.arc(bX, bY, 2.65 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.font = `bold ${Math.round(3.2 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(camNumber, bX, bY + 1);
+
+      // 2. Przeciwległy medalion bez numeru na [-11.80, -7.25]
+      const oppX = center - 11.80 * scale;
+      const oppY = center + 7.25 * scale;
+      ctx.beginPath();
+      ctx.arc(oppX, oppY, 2.5 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 3. Napis "SWISS" na [-14.35, 0.80], obrócony 90 st.
+      ctx.save();
+      const sX = center - 14.35 * scale;
+      const sY = center - 0.80 * scale;
+      ctx.translate(sX, sY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.font = `bold ${Math.round(2.1 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
+      ctx.fillText("SWISS", 0, 0);
+      ctx.restore();
+
+      // 4. Napis "MADE" na [0.0, -15.15]
+      const mX = center;
+      const mY = center + 15.15 * scale;
+      ctx.font = `bold ${Math.round(2.0 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
+      ctx.fillText("MADE", mX, mY);
+
+      // 5. 13 ząbków kalibracyjnych wzdłuż dolnego łuku (kąty 208 do 332 st.)
+      for (let a = 208; a <= 332; a += 10) {
+        const rad = a * Math.PI / 180;
+        const pX = center + (BASE_R - 0.65) * scale * Math.cos(rad);
+        const pY = center - (BASE_R - 0.65) * scale * Math.sin(rad);
+        ctx.save();
+        ctx.translate(pX, pY);
+        ctx.rotate(-rad + Math.PI / 2);
+        ctx.fillRect(-0.35 * scale, -0.2 * scale, 0.7 * scale, 0.4 * scale);
+        ctx.restore();
+      }
+
+      // 6. Rysowanie piktogramu ściegu
+      ctx.lineWidth = 0.5 * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const iconX = center;
+      const iconY = center + 11.65 * scale;
+
+      ctx.beginPath();
+      if (iconKind === 'wave') {
+        for (let i = 0; i <= 24; i++) {
+          let px = iconX + (i - 12) * 0.32 * scale;
+          let py = iconY + Math.sin(i * 0.5) * 1.1 * scale;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+      } else if (iconKind === 'scallop') {
+        for (let i = 0; i <= 24; i++) {
+          let px = iconX + (i - 12) * 0.32 * scale;
+          let py = iconY - Math.abs(Math.sin(i * 0.45)) * 1.3 * scale;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+      } else {
+        // Zygzak domyślny
+        for (let i = 0; i <= 6; i++) {
+          let px = iconX + (i - 3) * 1.2 * scale;
+          let py = iconY + ((i % 2 === 0) ? -1.2 : 1.2) * scale;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+      }
+      ctx.stroke();
+
+      const texture = new THREE.CanvasTexture(cvs);
+      texture.anisotropy = 4;
+      return texture;
+    }
+
+    // --- Główna aktualizacja sceny 3D z obsługą STL i modelu parametrycznego ---
     function updateThreeMesh() {
       if (!scene) return;
       if (camMeshGroup) scene.remove(camMeshGroup);
 
       camMeshGroup = new THREE.Group();
 
-      const geom = generateCamGeometry();
-      // Środek w [0,0,0]
+      const isPreset = CAM_PRESETS.some(p => p.cam === currentCam.cam);
+
+      if (isPreset && !isCustomModified && stlLoader) {
+        loadCamSTL(currentCam.cam, currentPart);
+      } else {
+        renderProceduralCam();
+      }
+
+      scene.add(camMeshGroup);
+    }
+
+    function loadCamSTL(camNo, part) {
+      let filename = '';
+      if (part === 'assembly') filename = `stls/cam_${camNo}.stl`;
+      else if (part === 'body') filename = `stls/cam_${camNo}_body.stl`;
+      else if (part === 'ring') filename = `stls/universal_ring.stl`;
+
+      const badge = document.getElementById('modelSourceBadge');
+      if (badge) {
+        badge.className = 'badge-source badge-source-stl';
+        badge.innerHTML = `<span class="stl-loading-spinner"></span> STL (${part})...`;
+      }
+
+      if (stlCache.has(filename)) {
+        applyLoadedSTL(stlCache.get(filename), filename);
+        return;
+      }
+
+      // Wyświetl model parametryczny natychmiast, aby uniknąć pustego ekranu podczas pobierania
+      renderProceduralCam(true);
+
+      stlLoader.load(
+        filename,
+        function (geometry) {
+          geometry.computeVertexNormals();
+          geometry.center();
+          // Obrót: pliki STL z OpenSCAD mają oś Z w górę
+          geometry.rotateX(-Math.PI / 2);
+          stlCache.set(filename, geometry);
+          applyLoadedSTL(geometry, filename);
+        },
+        undefined,
+        function (error) {
+          console.warn(`Wczytywanie STL [${filename}] nie powiodło się, wyświetlam model parametryczny:`, error);
+          renderProceduralCam(false);
+        }
+      );
+    }
+
+    function applyLoadedSTL(geometry, filename) {
+      if (!camMeshGroup) return;
+      // Wyczyść tymczasową geometrię parametryczną
+      while (camMeshGroup.children.length > 0) {
+        camMeshGroup.remove(camMeshGroup.children[0]);
+      }
+
+      const mat = getCamMaterial(currentMaterialStyle, false, currentPart === 'ring');
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      camMeshGroup.add(mesh);
+
+      // Dodaj zabierak (wpust montażowy 3x4.1 mm) jako subtelny znacznik orientacji jeśli nieobecny
+      const badge = document.getElementById('modelSourceBadge');
+      if (badge) {
+        badge.className = 'badge-source badge-source-stl';
+        badge.innerHTML = `🟢 STL wydruku (${filename.replace('stls/', '')})`;
+      }
+    }
+
+    function renderProceduralCam(isTemporary = false) {
+      if (!camMeshGroup) return;
+      while (camMeshGroup.children.length > 0) {
+        camMeshGroup.remove(camMeshGroup.children[0]);
+      }
+
+      const geom = generateCamGeometry(currentPart);
       geom.translate(0, 0, -BODY_TOP_H / 2);
       geom.rotateX(-Math.PI / 2);
 
-      // Materiał dysku Elna (szmaragdowo-srebrny styl bakelit / polimer)
-      const material = new THREE.MeshStandardMaterial({
-        color: 0x059669,
-        metalness: 0.25,
-        roughness: 0.35,
-        wireframe: wireframeMode
-      });
-
-      const mainMesh = new THREE.Mesh(geom, material);
+      const mat = getCamMaterial(currentMaterialStyle, false, currentPart === 'ring');
+      const mainMesh = new THREE.Mesh(geom, mat);
+      mainMesh.castShadow = true;
+      mainMesh.receiveShadow = true;
       camMeshGroup.add(mainMesh);
 
-      // Oznaczenia górne: pierścień i wytłoczenie
-      const ringGeom = new THREE.TorusGeometry(2.65, 0.35, 12, 32);
-      const markMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 });
-      const ringMesh = new THREE.Mesh(ringGeom, markMat);
-      ringMesh.position.set(11.55, (BODY_TOP_H / 2) + 0.15, -7.25);
-      ringMesh.rotateX(Math.PI / 2);
-      camMeshGroup.add(ringMesh);
+      // Wytłoczenia i oznaczenia na kopułce (dla modelu parametrycznego)
+      if (currentPart !== 'ring') {
+        const topTexture = createDomeMarkingsTexture(currentCam.cam, currentCam.icon, currentMaterialStyle);
+        const diskGeom = new THREE.CircleGeometry(BASE_R - 0.1, 64);
+        const markPlaneMat = new THREE.MeshStandardMaterial({
+          map: topTexture,
+          transparent: true,
+          opacity: 0.95,
+          roughness: 0.35,
+          metalness: 0.1,
+          depthWrite: false
+        });
+        const markPlane = new THREE.Mesh(diskGeom, markPlaneMat);
+        markPlane.position.set(0, (BODY_TOP_H / 2) + DOME_CROWN * 0.45 + 0.05, 0);
+        markPlane.rotateX(-Math.PI / 2);
+        camMeshGroup.add(markPlane);
+      }
 
-      scene.add(camMeshGroup);
+      // Dodaj model zabieraka (wpust napędowy 3.0 x 4.1 x 5.5 mm)
+      const slotGeom = new THREE.BoxGeometry(TRANSPORT_W, TRANSPORT_DEPTH, TRANSPORT_LEN);
+      const slotMat = new THREE.MeshStandardMaterial({
+        color: (currentMaterialStyle === 'bakelite') ? 0x0a0c0e : 0x033f2e,
+        roughness: 0.8
+      });
+      const slotMesh = new THREE.Mesh(slotGeom, slotMat);
+      slotMesh.position.set(0, -(BODY_TOP_H / 2) + TRANSPORT_DEPTH / 2 - 0.05, -(COUNTERBORE_R + 1.0 + TRANSPORT_LEN / 2));
+      camMeshGroup.add(slotMesh);
+
+      const badge = document.getElementById('modelSourceBadge');
+      if (badge && !isTemporary) {
+        badge.className = 'badge-source badge-source-param';
+        badge.innerHTML = `🟡 Model parametryczny (Live)`;
+      }
     }
 
     // ==============================================================================
@@ -1512,11 +2062,38 @@
       URL.revokeObjectURL(a.href);
     }
 
-    function downloadStlDirect() {
-      const geom = generateCamGeometry();
-      const filename = `elna_cam_${currentCam.cam}.stl`;
-      exportBinarySTL(geom, filename);
-      showToast(`Pobrano gotowy plik ${filename} do druku 3D!`);
+    function downloadStl(targetPart = currentPart) {
+      const isPreset = CAM_PRESETS.some(p => p.cam === currentCam.cam);
+
+      if (isPreset && !isCustomModified) {
+        // Bezpośrednie pobranie oficjalnego, sprawdzonego pliku STL z repozytorium
+        let fileUrl = '';
+        let downloadName = '';
+        if (targetPart === 'assembly') {
+          fileUrl = `stls/cam_${currentCam.cam}.stl`;
+          downloadName = `cam_${currentCam.cam}.stl`;
+        } else if (targetPart === 'body') {
+          fileUrl = `stls/cam_${currentCam.cam}_body.stl`;
+          downloadName = `cam_${currentCam.cam}_body.stl`;
+        } else if (targetPart === 'ring') {
+          fileUrl = `stls/universal_ring.stl`;
+          downloadName = `universal_ring.stl`;
+        }
+
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast(`Pobrano oficjalny plik STL: ${downloadName}`);
+      } else {
+        // Eksport modelu parametrycznego wygenerowanego w przeglądarce
+        const geom = generateCamGeometry(targetPart);
+        const filename = `elna_cam_${currentCam.cam}_${targetPart}.stl`;
+        exportBinarySTL(geom, filename);
+        showToast(`Wyeksportowano model STL: ${filename}`);
+      }
     }
 
     // --- Generowanie OpenSCAD ---
@@ -1665,7 +2242,46 @@ elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_t
 
     // --- Zdarzenia UI ---
     function setupEventListeners() {
-      document.getElementById('downloadStlBtn').addEventListener('click', downloadStlDirect);
+      // Menu rozwijane pobierania STL
+      const dlBtn = document.getElementById('downloadStlBtn');
+      const dlMenu = document.getElementById('stlDropdownMenu');
+      if (dlBtn && dlMenu) {
+        dlBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dlMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+          dlMenu.classList.remove('show');
+        });
+      }
+
+      document.getElementById('dlOptionAssembly')?.addEventListener('click', () => {
+        downloadStl('assembly');
+      });
+      document.getElementById('dlOptionBody')?.addEventListener('click', () => {
+        downloadStl('body');
+      });
+      document.getElementById('dlOptionRing')?.addEventListener('click', () => {
+        downloadStl('ring');
+      });
+
+      // Przełącznik komponentu (Assembly / Body / Ring)
+      document.querySelectorAll('#partSelector .pill-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#partSelector .pill-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentPart = btn.dataset.part;
+          updateThreeMesh();
+          showToast(`Wyświetlono: ${btn.textContent}`);
+        });
+      });
+
+      // Wybór stylu materiału
+      document.getElementById('materialSelect')?.addEventListener('change', (e) => {
+        currentMaterialStyle = e.target.value;
+        updateThreeMesh();
+        showToast(`Zmieniono wykończenie: ${e.target.options[e.target.selectedIndex].text}`);
+      });
       document.getElementById('downloadScadBtn').addEventListener('click', downloadScadFile);
       document.getElementById('copyScadBtn').addEventListener('click', copyScadToClipboard);
       document.getElementById('copyCodeMiniBtn').addEventListener('click', copyScadToClipboard);
