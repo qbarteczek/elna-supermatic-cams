@@ -222,7 +222,7 @@
     }
 
     /* --- Pasek narzędziowy i przełączniki 3D oraz Symulatora Ściegu --- */
-    .three-top-bar, .fabric-top-bar {
+    .three-top-bar, .fabric-top-bar, .editor-top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -236,19 +236,20 @@
       border-radius: 10px;
     }
 
-    .three-option-group, .fabric-option-group {
+    .three-option-group, .fabric-option-group, .editor-option-group {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       font-size: 0.8rem;
     }
 
-    .three-option-label, .fabric-option-label {
+    .three-option-label, .fabric-option-label, .editor-option-label {
       color: var(--text-muted);
       font-weight: 600;
       font-size: 0.74rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      white-space: nowrap;
     }
 
     .pill-selector {
@@ -1100,8 +1101,27 @@
       <!-- 18-Krokowy Edytor Profilu -->
       <div class="panel-card editor-section">
         <div class="panel-title">
-          <span>Edytor Własnego Profilu (18 Kroków Cyklu)</span>
-          <span class="badge-tag badge-elna">Skok: 3.27 mm</span>
+          <div class="panel-title-left">
+            <span>Edytor Własnego Profilu (18 Kroków Cyklu)</span>
+            <span class="badge-tag badge-elna" id="editorCurrentCamBadge">Krzywka 03</span>
+          </div>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Skok: <b>3.27 mm</b></span>
+        </div>
+
+        <!-- Pasek bezpośredniego wyboru profilu do edycji -->
+        <div class="editor-top-bar">
+          <div class="editor-option-group" style="flex: 1; min-width: 250px;">
+            <span class="editor-option-label">Wczytaj do edytora:</span>
+            <select id="editorPresetSelect" class="form-control select-compact" style="max-width: 360px;" title="Wybierz dowolną z 34 krzywek do załadowania do edytora">
+              <!-- Wszystkie 34 krzywki generowane w JS -->
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 0.35rem; align-items: center;">
+            <button id="editorPrevCamBtn" class="btn-quick-tool" title="Poprzednia krzywka (N-1)">◀ Poprz.</button>
+            <button id="editorNextCamBtn" class="btn-quick-tool" title="Następna krzywka (N+1)">Nast. ▶</button>
+            <button id="editorResetCamBtn" class="btn-quick-tool" title="Przywróć domyślne fabryczne wartości tego profilu">↺ Przywróć</button>
+          </div>
         </div>
 
         <!-- Narzędzia masowe -->
@@ -1124,7 +1144,10 @@
         <div class="cam-params-grid">
           <div class="param-group">
             <label class="param-label" for="camNumberInput">Numer na tarczy:</label>
-            <input type="text" id="camNumberInput" class="form-control" value="03" maxlength="4" style="font-family: 'JetBrains Mono'; font-weight: 700;">
+            <div style="display: flex; gap: 4px;">
+              <input type="text" id="camNumberInput" class="form-control" value="03" maxlength="4" style="font-family: 'JetBrains Mono'; font-weight: 700; width: 70px;">
+              <button id="loadByNumberBtn" class="btn-quick-tool" title="Wczytaj profil krzywki o wpisanym numerze">Wczytaj</button>
+            </div>
           </div>
 
           <div class="param-group">
@@ -1236,7 +1259,7 @@
 
     // Inicjalizacja
     window.addEventListener('DOMContentLoaded', () => {
-      populateFabricCamSelect();
+      populateCamSelectors();
       buildCatalogCards();
       buildStepBars();
       initThreeJS();
@@ -1251,30 +1274,32 @@
       }
     });
 
-    // --- Dynamiczne uzupełnianie wyboru w symulatorze ściegu ---
-    function populateFabricCamSelect() {
-      const select = document.getElementById('fabricCamSelect');
-      if (!select) return;
-      select.innerHTML = '';
+    // --- Dynamiczne uzupełnianie selektorów 34 ściegów (w Edytorze i Symulatorze) ---
+    function populateCamSelectors() {
+      ['fabricCamSelect', 'editorPresetSelect'].forEach(selId => {
+        const select = document.getElementById(selId);
+        if (!select) return;
+        select.innerHTML = '';
 
-      const groupSingle = document.createElement('optgroup');
-      groupSingle.label = '⭐ Oryginalne pojedyncze Elna (15 dysków: 01-05, 14-18, 27-31)';
+        const groupSingle = document.createElement('optgroup');
+        groupSingle.label = '⭐ Oryginalne pojedyncze Elna (15 dysków: 01-05, 14-18, 27-31)';
 
-      const groupExtended = document.createElement('optgroup');
-      groupExtended.label = '✨ Rozszerzona biblioteka igły (19 dysków: 06-13, 19-26, 32-34)';
+        const groupExtended = document.createElement('optgroup');
+        groupExtended.label = '✨ Rozszerzona biblioteka igły (19 dysków: 06-13, 19-26, 32-34)';
 
-      CAM_PRESETS.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.cam;
-        const isSingle = SINGLE_15.includes(p.cam);
-        opt.textContent = `${p.cam} — ${p.name}${isSingle ? ' (poj.)' : ''}`;
-        if (isSingle) groupSingle.appendChild(opt);
-        else groupExtended.appendChild(opt);
+        CAM_PRESETS.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.cam;
+          const isSingle = SINGLE_15.includes(p.cam);
+          opt.textContent = `${p.cam} — ${p.name}${isSingle ? ' (poj.)' : ''}`;
+          if (isSingle) groupSingle.appendChild(opt);
+          else groupExtended.appendChild(opt);
+        });
+
+        select.appendChild(groupSingle);
+        select.appendChild(groupExtended);
+        select.value = currentCam.cam;
       });
-
-      select.appendChild(groupSingle);
-      select.appendChild(groupExtended);
-      select.value = currentCam.cam;
     }
 
     function toggleCatalogExpand() {
@@ -1398,10 +1423,16 @@
       document.getElementById('iconKindSelect').value = currentCam.icon;
       document.getElementById('activeCamHeader').textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
 
+      isCustomModified = false;
       const fabSel = document.getElementById('fabricCamSelect');
       if (fabSel) fabSel.value = currentCam.cam;
       const fabBadge = document.getElementById('fabricActiveCamBadge');
       if (fabBadge) fabBadge.textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
+
+      const editorSel = document.getElementById('editorPresetSelect');
+      if (editorSel) editorSel.value = currentCam.cam;
+      const editorBadge = document.getElementById('editorCurrentCamBadge');
+      if (editorBadge) editorBadge.textContent = `Krzywka ${currentCam.cam}`;
 
       updateStepBars();
       updateThreeMesh();
@@ -2684,6 +2715,44 @@ elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_t
           loadCamPreset(e.target.value);
         });
       }
+
+      // Wybór krzywki bezpośrednio w Edytorze 18 kroków
+      const editorSel = document.getElementById('editorPresetSelect');
+      if (editorSel) {
+        editorSel.addEventListener('change', (e) => {
+          loadCamPreset(e.target.value);
+        });
+      }
+
+      // Przełączanie poprzednia/następna w Edytorze
+      document.getElementById('editorPrevCamBtn')?.addEventListener('click', () => {
+        const currentIdx = CAM_PRESETS.findIndex(p => p.cam === currentCam.cam);
+        const prevIdx = (currentIdx - 1 + CAM_PRESETS.length) % CAM_PRESETS.length;
+        loadCamPreset(CAM_PRESETS[prevIdx].cam);
+      });
+
+      document.getElementById('editorNextCamBtn')?.addEventListener('click', () => {
+        const currentIdx = CAM_PRESETS.findIndex(p => p.cam === currentCam.cam);
+        const nextIdx = (currentIdx + 1) % CAM_PRESETS.length;
+        loadCamPreset(CAM_PRESETS[nextIdx].cam);
+      });
+
+      // Reset do fabrycznych wartości
+      document.getElementById('editorResetCamBtn')?.addEventListener('click', () => {
+        loadCamPreset(currentCam.cam);
+        showToast(`Przywrócono fabryczny profil krzywki ${currentCam.cam}!`);
+      });
+
+      // Przycisk wczytania krzywki o wpisanym numerze
+      document.getElementById('loadByNumberBtn')?.addEventListener('click', () => {
+        const val = document.getElementById('camNumberInput').value.trim().padStart(2, '0');
+        const matching = CAM_PRESETS.find(p => p.cam === val || p.cam === document.getElementById('camNumberInput').value.trim());
+        if (matching) {
+          loadCamPreset(matching.cam);
+        } else {
+          showToast(`Brak krzywki o numerze ${val} w bazie 34 profili.`);
+        }
+      });
 
       // Przełączniki prędkości maszyny
       document.querySelectorAll('#sewingSpeedSelector .pill-btn').forEach(btn => {
