@@ -1,0 +1,1814 @@
+#!/usr/bin/env python3
+"""
+Builder for index.html (Elna Supermatic 3D Cam Studio)
+Generates the complete interactive web app with all 34 presets embedded.
+"""
+
+import json
+from pathlib import Path
+
+# Load all 34 profiles
+with open('tools/all_profiles_dump.json', 'r', encoding='utf-8') as f:
+    PROFILES_DATA = json.load(f)
+
+print(f"Loaded {len(PROFILES_DATA)} cam profiles")
+
+HTML_TEMPLATE = r'''<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elna Supermatic — Studio Krzywek Ściegowych (Generator 3D / STL)</title>
+  <meta name="description" content="Interaktywny generator i projektant krzywek ściegowych do maszyn do szycia Elna Supermatic i Elna SU. Wizualizacja 3D, symulacja ściegu na tkaninie i bezpośredni eksport STL do druku 3D.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #06090e;
+      --bg-surface: #0e1522;
+      --bg-surface-elevated: #162032;
+      --bg-card: rgba(22, 32, 50, 0.72);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(16, 185, 129, 0.35);
+      --border-active: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-elna: #10b981;
+      --accent-emerald: #059669;
+      --accent-cyan: #06b6d4;
+      --accent-sky: #38bdf8;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --accent-rose: #f43f5e;
+      --shadow-glow: 0 0 25px rgba(16, 185, 129, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at 85% 10%, #132338 0%, #06090e 65%);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 4rem;
+    }
+
+    /* --- Nagłówek --- */
+    header {
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(6, 9, 14, 0.92);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.75rem 1.75rem;
+    }
+
+    .header-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.45rem;
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .brand-title h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn-stl {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      font-weight: 700;
+    }
+    .btn-stl:hover {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border-subtle);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* --- Główny kontener --- */
+    main {
+      max-width: 1600px;
+      margin: 1.5rem auto 0;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    /* --- Panele i karty --- */
+    .panel-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      position: relative;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+    }
+
+    .panel-title-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-elna {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge-cyan {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    /* --- Kontener 3D Three.js --- */
+    .three-wrapper {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      background: radial-gradient(circle at 50% 50%, #152238 0%, #080c14 80%);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    #threeContainer {
+      width: 100%;
+      height: 100%;
+    }
+
+    .three-controls-overlay {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.85rem;
+      display: flex;
+      gap: 0.4rem;
+      z-index: 10;
+    }
+
+    .btn-icon-tiny {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background: rgba(14, 21, 34, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      color: #e2e8f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    .btn-icon-tiny:hover {
+      background: var(--accent-elna);
+      color: #06090e;
+      border-color: var(--accent-elna);
+    }
+    .btn-icon-tiny.active {
+      background: rgba(16, 185, 129, 0.25);
+      color: #34d399;
+      border-color: #10b981;
+    }
+
+    .three-hud-info {
+      position: absolute;
+      bottom: 0.85rem;
+      left: 0.85rem;
+      background: rgba(14, 21, 34, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 0.85rem;
+    }
+    .three-hud-info span b {
+      color: #f8fafc;
+    }
+
+    /* --- Symulacja ściegu na tkaninie --- */
+    .fabric-simulation-box {
+      background: #111a2c;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .fabric-canvas-container {
+      width: 100%;
+      height: 130px;
+      background: #19273c;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    #fabricCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .fabric-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+    }
+
+    .thread-color-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .color-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .color-dot.active {
+      border-color: #fff;
+      transform: scale(1.2);
+    }
+
+    /* --- Presety i Katalog 34 Krzywek --- */
+    .catalog-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .catalog-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .filter-pill.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent-elna);
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .search-input {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      color: #fff;
+      font-size: 0.8rem;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      border-color: var(--accent-elna);
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 0.6rem;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 0.35rem;
+    }
+
+    .catalog-grid::-webkit-scrollbar { width: 5px; }
+    .catalog-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    .cam-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 0.6rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .cam-card:hover {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: #1e2c44;
+      transform: translateY(-2px);
+    }
+    .cam-card.active {
+      border-color: var(--accent-elna);
+      background: rgba(16, 185, 129, 0.12);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+    }
+
+    .cam-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cam-number-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.1rem 0.4rem;
+      border-radius: 5px;
+    }
+    .cam-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .status-grounded { background: #10b981; box-shadow: 0 0 6px #10b981; }
+    .status-candidate { background: #38bdf8; }
+
+    .cam-name {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cam-mini-wave {
+      width: 100%;
+      height: 24px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 4px;
+    }
+
+    /* --- 18-Krokowy Edytor Profilu --- */
+    .editor-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .editor-quick-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-quick-tool {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-quick-tool:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    /* 18 kolumn słupków */
+    .step-bars-container {
+      display: grid;
+      grid-template-columns: repeat(18, 1fr);
+      gap: 4px;
+      background: #080d16;
+      padding: 0.75rem 0.5rem 0.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      align-items: end;
+      height: 190px;
+    }
+
+    .step-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .step-val-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--accent-elna);
+      font-weight: 700;
+    }
+
+    .step-bar-track {
+      width: 100%;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .step-bar-fill {
+      width: 100%;
+      background: linear-gradient(0deg, #059669, #34d399);
+      border-radius: 3px;
+      transition: height 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .step-col:hover .step-bar-fill {
+      background: linear-gradient(0deg, #10b981, #6ee7b7);
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+    }
+
+    .step-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--text-dim);
+    }
+
+    /* Parametry dysku */
+    .cam-params-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .param-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.45rem 0.65rem;
+      color: #fff;
+      font-size: 0.84rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--accent-elna);
+    }
+
+    /* Sekcja OpenSCAD */
+    .scad-preview-box {
+      background: #05080e;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 0.85rem;
+      max-height: 140px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #10b981;
+      color: #06090e;
+      padding: 0.75rem 1.4rem;
+      border-radius: 10px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      display: none;
+      z-index: 1000;
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      max-width: 650px;
+      width: 100%;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nagłówek -->
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-logo">E</div>
+        <div class="brand-title">
+          <h1>Elna Supermatic — Studio Krzywek Ściegowych</h1>
+          <p>Interaktywny projektant dysków do maszyn Elna Supermatic & Elna SU</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="downloadStlBtn" class="btn btn-stl" title="Pobierz gotowy plik STL do natychmiastowego druku 3D">
+          💾 Pobierz STL do druku 3D
+        </button>
+        <button id="downloadScadBtn" class="btn btn-secondary" title="Pobierz plik źródłowy OpenSCAD">
+          📐 Pobierz .scad
+        </button>
+        <button id="copyScadBtn" class="btn btn-secondary" title="Kopiuj kod OpenSCAD do schowka">
+          📋 Kopiuj SCAD
+        </button>
+        <button id="exportJsonBtn" class="btn btn-secondary" title="Eksportuj profil do pliku JSON">
+          💾 Eksport JSON
+        </button>
+        <button id="importJsonBtn" class="btn btn-secondary" title="Wczytaj profil z pliku JSON">
+          📂 Import JSON
+        </button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+        <button id="helpBtn" class="btn btn-secondary" title="Instrukcja i dane techniczne">
+          ❓ Pomoc
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Główna zawartość -->
+  <main>
+    <!-- Lewa kolumna: 3D + Symulacja tkaniny -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Panel 3D -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <div class="panel-title-left">
+            <span>Podgląd 3D Dysku Krzywki</span>
+            <span class="badge-tag badge-elna">WebGL / Three.js</span>
+          </div>
+          <span id="activeCamHeader" style="font-family: 'JetBrains Mono'; color: #34d399; font-size: 0.85rem;">Krzywka 03</span>
+        </div>
+
+        <div class="three-wrapper">
+          <div id="threeContainer"></div>
+
+          <!-- Narzędzia 3D -->
+          <div class="three-controls-overlay">
+            <button id="toggleRotateBtn" class="btn-icon-tiny active" title="Włącz/wyłącz auto-obrót">🔄</button>
+            <button id="viewIsoBtn" class="btn-icon-tiny" title="Widok izometryczny">📐</button>
+            <button id="viewTopBtn" class="btn-icon-tiny" title="Widok z góry">⬆</button>
+            <button id="viewBottomBtn" class="btn-icon-tiny" title="Widok z dołu (zabierak)">⬇</button>
+            <button id="toggleWireframeBtn" class="btn-icon-tiny" title="Siatka trójkątów (Wireframe)">🕸</button>
+            <button id="resetCameraBtn" class="btn-icon-tiny" title="Zresetuj kamerę">🎯</button>
+          </div>
+
+          <!-- Pomiary HUD -->
+          <div class="three-hud-info">
+            <span>⌀ <b>43.64 mm</b></span>
+            <span>Wysokość: <b>7.31 mm</b></span>
+            <span>Skok: <b>3.27 mm</b></span>
+            <span>Otwór: <b>16.5 mm</b></span>
+            <span>Zabierak: <b>3.0×4.1 mm</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel symulacji ściegu na tkaninie -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <div class="panel-title-left">
+            <span>Wirtualne Przeszycie na Tkaninie (Symulator Ściegu)</span>
+            <span class="badge-tag badge-cyan">18 Kroków Cyklu</span>
+          </div>
+          <button id="animateSewingBtn" class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.76rem;">
+            ▶ Uruchom maszynę
+          </button>
+        </div>
+
+        <div class="fabric-simulation-box">
+          <div class="fabric-canvas-container">
+            <canvas id="fabricCanvas"></canvas>
+          </div>
+
+          <div class="fabric-controls">
+            <div class="thread-color-picker">
+              <span style="color: var(--text-muted); font-size: 0.78rem;">Kolor nici:</span>
+              <div class="color-dot active" style="background: #f8fafc;" data-color="#f8fafc" title="Biała"></div>
+              <div class="color-dot" style="background: #fbbf24;" data-color="#fbbf24" title="Złota"></div>
+              <div class="color-dot" style="background: #ef4444;" data-color="#ef4444" title="Czerwona"></div>
+              <div class="color-dot" style="background: #38bdf8;" data-color="#38bdf8" title="Błękitna"></div>
+              <div class="color-dot" style="background: #10b981;" data-color="#10b981" title="Szmaragdowa Elna"></div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-muted);">
+              <span>Gęstość: <b id="stitchDensityLabel" style="color:#fff">Średnia</b></span>
+              <span>Szerokość: <b id="stitchWidthLabel" style="color:#34d399">0.0 – 4.0 mm</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prawa kolumna: Katalog 34 krzywek + Edytor 18 kroków -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Katalog 34 Krzywek -->
+      <div class="panel-card catalog-section">
+        <div class="panel-title">
+          <span>Katalog Krzywek Elna Supermatic</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);"><b id="catalogCount">34</b> profili</span>
+        </div>
+
+        <input type="text" id="catalogSearchInput" class="search-input" placeholder="🔍 Szukaj ściegu (np. Zigzag, Blind, Elastic, Scallop, 03...)" />
+
+        <div class="catalog-filter-bar">
+          <button class="filter-pill active" data-filter="all">Wszystkie (34)</button>
+          <button class="filter-pill" data-filter="grounded">Fabryczne (5)</button>
+          <button class="filter-pill" data-filter="utility">Użytkowe</button>
+          <button class="filter-pill" data-filter="scallop">Fale & Muszelki</button>
+          <button class="filter-pill" data-filter="geometric">Geometryczne</button>
+        </div>
+
+        <div class="catalog-grid" id="catalogGrid">
+          <!-- Karty generowane dynamicznie w JS -->
+        </div>
+      </div>
+
+      <!-- 18-Krokowy Edytor Profilu -->
+      <div class="panel-card editor-section">
+        <div class="panel-title">
+          <span>Edytor Własnego Profilu (18 Kroków Cyklu)</span>
+          <span class="badge-tag badge-elna">Skok: 3.27 mm</span>
+        </div>
+
+        <!-- Narzędzia masowe -->
+        <div class="editor-quick-tools">
+          <button class="btn-quick-tool" onclick="applyPattern('zigzag')">Zygzak (0-3)</button>
+          <button class="btn-quick-tool" onclick="applyPattern('sine')">Sinusoida</button>
+          <button class="btn-quick-tool" onclick="applyPattern('triangle')">Trójkąt</button>
+          <button class="btn-quick-tool" onclick="applyPattern('blind')">Ścieg kryty</button>
+          <button class="btn-quick-tool" onclick="applyPattern('stairs')">Schodki</button>
+          <button class="btn-quick-tool" onclick="applyPattern('invert')">Odwróć ⇄</button>
+          <button class="btn-quick-tool" onclick="applyPattern('center')">Środek (1.5)</button>
+        </div>
+
+        <!-- 18 Słupków -->
+        <div class="step-bars-container" id="stepBarsContainer">
+          <!-- 18 słupków generowanych w JS -->
+        </div>
+
+        <!-- Parametry wytłoczenia i powierzchni -->
+        <div class="cam-params-grid">
+          <div class="param-group">
+            <label class="param-label" for="camNumberInput">Numer na tarczy:</label>
+            <input type="text" id="camNumberInput" class="form-control" value="03" maxlength="4" style="font-family: 'JetBrains Mono'; font-weight: 700;">
+          </div>
+
+          <div class="param-group">
+            <label class="param-label" for="surfaceModeSelect">Tryb wieńca krzywki:</label>
+            <select id="surfaceModeSelect" class="form-control">
+              <option value="stepped">Schodkowy (Stepped)</option>
+              <option value="smooth">Płynny (Smooth / Spline)</option>
+            </select>
+          </div>
+
+          <div class="param-group">
+            <label class="param-label" for="iconKindSelect">Piktogram ściegu:</label>
+            <select id="iconKindSelect" class="form-control">
+              <option value="zigzag">Zygzak</option>
+              <option value="step">Schodkowy / Trójskok</option>
+              <option value="wave">Płynna fala</option>
+              <option value="blind">Ścieg kryty</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Kod OpenSCAD -->
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Wygenerowany kod OpenSCAD:</span>
+            <button id="copyCodeMiniBtn" class="btn-quick-tool">Kopiuj</button>
+          </div>
+          <pre class="scad-preview-box"><code id="scadPreviewCode">// Kod OpenSCAD generowany w czasie rzeczywistym...</code></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal pomocy -->
+  <div class="modal-backdrop" id="helpModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size: 1.2rem; color: #fff;">Instrukcja Studia Krzywek Elna Supermatic</h2>
+        <button class="modal-close" onclick="closeHelpModal()">&times;</button>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.85rem;">
+        <p><b>Elna Supermatic Cam Studio</b> pozwala na błyskawiczne projektowanie, podgląd w czasie rzeczywistym oraz bezpośredni eksport gotowych do druku 3D dysków (krzywek wymiennych) do kultowych szwajcarskich maszyn <b>Elna Supermatic</b> oraz <b>Elna SU</b>.</p>
+        
+        <h3 style="color: #fff; font-size: 0.95rem; margin-top: 0.5rem;">⚙️ Wymiary nominalne (zgodne z pomiarami fabrycznymi):</h3>
+        <ul style="padding-left: 1.2rem; line-height: 1.6;">
+          <li><b>Średnica zewnętrzna:</b> 43.64 mm (promień maks. 21.82 mm)</li>
+          <li><b>Wysokość całkowita:</b> 7.31 mm (korpus 7.0 mm + oznaczenia 0.31 mm)</li>
+          <li><b>Dolny wieniec roboczy:</b> wysokość 4.5 mm, promień bazowy 18.55 mm, maksymalny 21.82 mm (skok 3.27 mm)</li>
+          <li><b>Mocowanie:</b> otwór fi 16.5 mm (r=8.25 mm) ze stożkowym pogłębieniem 1.5 mm (r=9.5 mm) i gniazdem zabieraka 3.0×4.1 mm (głębokość 5.5 mm).</li>
+        </ul>
+
+        <h3 style="color: #fff; font-size: 0.95rem; margin-top: 0.5rem;">🖨️ Zalecane parametry druku 3D (FDM):</h3>
+        <ul style="padding-left: 1.2rem; line-height: 1.6;">
+          <li><b>Materiał:</b> PETG (zalecany) lub PLA / ABS / ASA.</li>
+          <li><b>Wysokość warstwy:</b> 0.12 – 0.16 mm dla maksymalnej gładkości krzywki.</li>
+          <li><b>Ścianki / Wypełnienie:</b> 4–5 obrysów (walls) lub 100% infill (dysk musi być sztywny).</li>
+          <li><b>Orientacja na stole:</b> Płasko, podstawą (spodem) do stołu roboczego. Brak podpór (support free).</li>
+        </ul>
+
+        <h3 style="color: #fff; font-size: 0.95rem; margin-top: 0.5rem;">💾 Dwa sposoby zapisu:</h3>
+        <p>1. <b>Bezpośredni STL (0.01 s):</b> Kliknij zielony przycisk w prawym górnym rogu. Plik pobierze się od razu i możesz go otworzyć w Bambu Studio, OrcaSlicer lub PrusaSlicer.<br>
+        2. <b>OpenSCAD (.scad):</b> Jeśli wolisz kompilować kod lokalnie w OpenSCAD, kliknij przycisk „Pobierz .scad”.</p>
+      </div>
+      <button class="btn btn-stl" style="align-self: flex-end;" onclick="closeHelpModal()">Rozumiem, wracam do projektowania</button>
+    </div>
+  </div>
+
+  <div id="toast">Pobrano plik!</div>
+
+  <!-- Skrypt Aplikacji -->
+  <script>
+    // Baza 34 profili fabrycznych Elna Supermatic
+    const CAM_PRESETS = ''' + json.dumps(PROFILES_DATA, ensure_ascii=False) + r''';
+
+    // Stan aplikacji
+    let currentCam = {
+      cam: "03",
+      name: "Zigzag reference",
+      status: "uploaded-stl/scad-reference",
+      values: [0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3],
+      mode: "stepped",
+      icon: "zigzag"
+    };
+
+    let threadColor = "#f8fafc";
+    let isSewingAnimated = false;
+    let animOffset = 0;
+
+    // Stałe konstrukcyjne Elna Supermatic
+    const BASE_R = 18.550;
+    const THROW = 3.270;
+    const OVERALL_R = 21.820;
+    const LOBE_H = 4.499;
+    const BODY_TOP_H = 6.999;
+    const TOTAL_H = 7.308;
+    const CENTER_HOLE_R = 8.250;
+    const COUNTERBORE_R = 9.500;
+    const COUNTERBORE_H = 1.500;
+    const CONE_H = 1.500;
+    const TRANSPORT_W = 3.000;
+    const TRANSPORT_LEN = 4.100;
+    const TRANSPORT_DEPTH = 5.500;
+
+    // Inicjalizacja
+    window.addEventListener('DOMContentLoaded', () => {
+      buildCatalogCards();
+      buildStepBars();
+      initThreeJS();
+      drawFabricSimulation();
+      updateScadPreview();
+      setupEventListeners();
+    });
+
+    // --- Katalog Kart ---
+    function buildCatalogCards(filter = 'all', search = '') {
+      const grid = document.getElementById('catalogGrid');
+      grid.innerHTML = '';
+
+      const searchLower = search.toLowerCase();
+      let count = 0;
+
+      CAM_PRESETS.forEach(preset => {
+        // Filtracja
+        let matchFilter = true;
+        if (filter === 'grounded') {
+          matchFilter = (preset.status === 'uploaded-stl/scad-reference' || preset.status === 'source-profile');
+        } else if (filter === 'utility') {
+          matchFilter = ['01', '03', '06', '10', '19', '20'].includes(preset.cam);
+        } else if (filter === 'scallop') {
+          matchFilter = ['02', '04', '05', '14', '17', '18', '24', '25', '26'].includes(preset.cam);
+        } else if (filter === 'geometric') {
+          matchFilter = ['07', '08', '09', '11', '12', '13', '15', '16', '21', '22', '23', '27', '28', '29', '30', '31', '32', '33', '34'].includes(preset.cam);
+        }
+
+        const matchSearch = preset.name.toLowerCase().includes(searchLower) || preset.cam.includes(searchLower);
+
+        if (matchFilter && matchSearch) {
+          count++;
+          const card = document.createElement('div');
+          card.className = `cam-card ${preset.cam === currentCam.cam ? 'active' : ''}`;
+          card.id = `cam-card-${preset.cam}`;
+          card.onclick = () => loadCamPreset(preset.cam);
+
+          const isGrounded = (preset.status === 'uploaded-stl/scad-reference' || preset.status === 'source-profile');
+
+          card.innerHTML = `
+            <div class="cam-card-header">
+              <span class="cam-number-badge">${preset.cam}</span>
+              <span class="cam-status-dot ${isGrounded ? 'status-grounded' : 'status-candidate'}" title="${preset.status}"></span>
+            </div>
+            <div class="cam-name" title="${preset.name}">${preset.name}</div>
+            <canvas class="cam-mini-wave" id="mini-wave-${preset.cam}"></canvas>
+          `;
+
+          grid.appendChild(card);
+
+          // Rysowanie fali
+          setTimeout(() => {
+            const cvs = document.getElementById(`mini-wave-${preset.cam}`);
+            if (cvs) drawMiniWave(cvs, preset.values, preset.mode);
+          }, 0);
+        }
+      });
+
+      document.getElementById('catalogCount').textContent = count;
+    }
+
+    function drawMiniWave(canvas, values, mode) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.offsetWidth * 2;
+      const h = canvas.height = canvas.offsetHeight * 2;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = "#34d399";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+
+      for (let x = 0; x < w; x++) {
+        let t = (x / w) * 18;
+        let v = 0;
+        if (mode === 'stepped') {
+          let idx = Math.floor(t) % 18;
+          v = values[idx];
+        } else {
+          v = interpolateCyclic(values, t);
+        }
+        let y = h - 4 - (v / 3.0) * (h - 8);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function loadCamPreset(camNo) {
+      const preset = CAM_PRESETS.find(c => c.cam === camNo);
+      if (!preset) return;
+
+      currentCam = {
+        cam: preset.cam,
+        name: preset.name,
+        status: preset.status,
+        values: [...preset.values],
+        mode: preset.mode || "smooth",
+        icon: preset.icon || "zigzag"
+      };
+
+      document.querySelectorAll('.cam-card').forEach(c => c.classList.remove('active'));
+      const activeCard = document.getElementById(`cam-card-${preset.cam}`);
+      if (activeCard) activeCard.classList.add('active');
+
+      document.getElementById('camNumberInput').value = currentCam.cam;
+      document.getElementById('surfaceModeSelect').value = currentCam.mode;
+      document.getElementById('iconKindSelect').value = currentCam.icon;
+      document.getElementById('activeCamHeader').textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
+
+      updateStepBars();
+      updateThreeMesh();
+      drawFabricSimulation();
+      updateScadPreview();
+      showToast(`Załadowano profil krzywki ${preset.cam} (${preset.name})`);
+    }
+
+    // --- 18 Słupków Edytora ---
+    function buildStepBars() {
+      const container = document.getElementById('stepBarsContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < 18; i++) {
+        const col = document.createElement('div');
+        col.className = 'step-col';
+        col.id = `step-col-${i}`;
+
+        col.innerHTML = `
+          <span class="step-val-badge" id="step-val-${i}">0.0</span>
+          <div class="step-bar-track" id="step-track-${i}">
+            <div class="step-bar-fill" id="step-fill-${i}" style="height: 0%;"></div>
+          </div>
+          <span class="step-label">${i + 1}</span>
+        `;
+
+        // Interakcja myszą (kliknięcie lub przeciąganie)
+        const track = col.querySelector('.step-bar-track');
+        track.addEventListener('mousedown', (e) => startStepDrag(i, e));
+        container.appendChild(col);
+      }
+
+      updateStepBars();
+    }
+
+    function updateStepBars() {
+      for (let i = 0; i < 18; i++) {
+        const v = currentCam.values[i];
+        const pct = (v / 3.0) * 100;
+        const fill = document.getElementById(`step-fill-${i}`);
+        const valBadge = document.getElementById(`step-val-${i}`);
+        if (fill) fill.style.height = `${pct}%`;
+        if (valBadge) valBadge.textContent = Number(v).toFixed(1);
+      }
+    }
+
+    function startStepDrag(stepIdx, event) {
+      function updateFromMouse(e) {
+        const track = document.getElementById(`step-track-${stepIdx}`);
+        if (!track) return;
+        const rect = track.getBoundingClientRect();
+        let relY = 1.0 - ((e.clientY - rect.top) / rect.height);
+        relY = Math.max(0, Math.min(1, relY));
+
+        // Zaokrąglenie do 0.25 dla wygody
+        let snapVal = Math.round(relY * 3.0 * 4) / 4;
+        currentCam.values[stepIdx] = snapVal;
+        updateStepBars();
+        updateThreeMesh();
+        drawFabricSimulation();
+        updateScadPreview();
+      }
+
+      updateFromMouse(event);
+
+      function onMouseMove(e) { updateFromMouse(e); }
+      function onMouseUp() {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      }
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    function applyPattern(kind) {
+      if (kind === 'zigzag') {
+        for (let i = 0; i < 18; i++) currentCam.values[i] = (i % 2 === 0) ? 0 : 3;
+        currentCam.mode = 'stepped';
+      } else if (kind === 'sine') {
+        for (let i = 0; i < 18; i++) currentCam.values[i] = Number((1.5 + 1.4 * Math.sin(i * Math.PI * 2 / 18)).toFixed(2));
+        currentCam.mode = 'smooth';
+      } else if (kind === 'triangle') {
+        for (let i = 0; i < 18; i++) {
+          let t = (i / 18) * 2;
+          let v = t <= 1 ? t * 3 : (2 - t) * 3;
+          currentCam.values[i] = Number(v.toFixed(2));
+        }
+      } else if (kind === 'blind') {
+        currentCam.values = [1.5, 1.5, 1.5, 0, 3, 0, 1.5, 1.5, 1.5, 0, 3, 0, 1.5, 1.5, 1.5, 0, 3, 0];
+        currentCam.mode = 'stepped';
+      } else if (kind === 'stairs') {
+        for (let i = 0; i < 18; i++) currentCam.values[i] = Number(((i % 6) / 5 * 3).toFixed(2));
+      } else if (kind === 'invert') {
+        for (let i = 0; i < 18; i++) currentCam.values[i] = Number((3.0 - currentCam.values[i]).toFixed(2));
+      } else if (kind === 'center') {
+        for (let i = 0; i < 18; i++) currentCam.values[i] = 1.5;
+      }
+
+      document.getElementById('surfaceModeSelect').value = currentCam.mode;
+      updateStepBars();
+      updateThreeMesh();
+      drawFabricSimulation();
+      updateScadPreview();
+      showToast(`Zastosowano wzorzec: ${kind}`);
+    }
+
+    // --- Spline Catmull-Rom cykliczny ---
+    function interpolateCyclic(points, tGlobal) {
+      const n = points.length;
+      let idx1 = Math.floor(tGlobal) % n;
+      let idx0 = (idx1 + n - 1) % n;
+      let idx2 = (idx1 + 1) % n;
+      let idx3 = (idx1 + 2) % n;
+      let t = tGlobal - Math.floor(tGlobal);
+
+      let p0 = points[idx0], p1 = points[idx1], p2 = points[idx2], p3 = points[idx3];
+      let val = 0.5 * (
+        (2 * p1) +
+        (-p0 + p2) * t +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * (t * t) +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * (t * t * t)
+      );
+      return Math.max(0, Math.min(3, val));
+    }
+
+    // --- Symulacja Tkaniny i Ściegu ---
+    function drawFabricSimulation() {
+      const canvas = document.getElementById('fabricCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.offsetWidth * 2;
+      const h = canvas.height = canvas.offsetHeight * 2;
+
+      // 1. Tło tkaniny (splot płócienny / denim)
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtelny wzór nitek tkaniny
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 6) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 6) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // 2. Rysowanie ściegu przesuwającego się w dół / wzdłuż tkaniny
+      const centerY = h / 2;
+      const amplitude = h * 0.38; // szerokość zygzaka
+
+      const numStitches = 72; // 4 pełne obroty krzywki
+      const stepX = w / numStitches;
+
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = threadColor;
+
+      ctx.beginPath();
+      for (let s = 0; s < numStitches; s++) {
+        let cyclicIdx = (s + animOffset) % 18;
+        let v = currentCam.values[cyclicIdx];
+        let needleX = centerY + (v - 1.5) / 1.5 * amplitude;
+        let fabricY = s * stepX;
+
+        if (s === 0) ctx.moveTo(fabricY, needleX);
+        else ctx.lineTo(fabricY, needleX);
+      }
+      ctx.stroke();
+
+      // Punkty nakłucia igły
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      for (let s = 0; s < numStitches; s++) {
+        let cyclicIdx = (s + animOffset) % 18;
+        let v = currentCam.values[cyclicIdx];
+        let needleX = centerY + (v - 1.5) / 1.5 * amplitude;
+        let fabricY = s * stepX;
+
+        ctx.beginPath();
+        ctx.arc(fabricY, needleX, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // --- Wizualizacja 3D Three.js ---
+    let scene, camera, renderer, controls, camMeshGroup;
+    let autoRotate = true;
+    let wireframeMode = false;
+
+    function initThreeJS() {
+      const container = document.getElementById('threeContainer');
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 420;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+      camera.position.set(40, 32, 55);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = autoRotate;
+      controls.autoRotateSpeed = 1.5;
+
+      // Oświetlenie
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0x34d399, 1.2);
+      dirLight1.position.set(45, 60, 45);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.75);
+      dirLight2.position.set(-45, -30, -45);
+      scene.add(dirLight2);
+
+      updateThreeMesh();
+
+      window.addEventListener('resize', onThreeResize);
+      animateThree();
+    }
+
+    function onThreeResize() {
+      const container = document.getElementById('threeContainer');
+      if (!container || !renderer || !camera) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animateThree() {
+      requestAnimationFrame(animateThree);
+      controls.autoRotate = autoRotate;
+      controls.update();
+      renderer.render(scene, camera);
+
+      if (isSewingAnimated) {
+        animOffset = (animOffset + 0.15) % 18;
+        drawFabricSimulation();
+      }
+    }
+
+    // ==============================================================================
+    // GENEROWANIE SZCZELNEJ GEOMETRII 3D (2-MANIFOLD WATERTIGHT MESH)
+    // ==============================================================================
+    function generateCamGeometry() {
+      const N = 144; // 144 / 18 = 8 podziałów na krok
+      const values = currentCam.values;
+      const mode = currentCam.mode;
+
+      // Tablica promieni dla N kątów
+      const radii = new Float32Array(N);
+      const cosA = new Float32Array(N);
+      const sinA = new Float32Array(N);
+
+      for (let i = 0; i < N; i++) {
+        const a = i * 2.0 * Math.PI / N;
+        cosA[i] = Math.cos(a);
+        sinA[i] = Math.sin(a);
+
+        let v = 0;
+        if (mode === 'stepped') {
+          let step = Math.floor((i / N) * 18) % 18;
+          v = values[step];
+        } else {
+          v = interpolateCyclic(values, (i / N) * 18);
+        }
+        radii[i] = BASE_R + (v / 3.0) * THROW;
+      }
+
+      // Pierścienie Z
+      // Ring 0: Z=0, R=radii[i] (dno wieńca)
+      // Ring 1: Z=4.499, R=radii[i] (szczyt wieńca)
+      // Ring 2: Z=4.499, R=BASE_R (wewnętrzna krawędź uskoku)
+      // Ring 3: Z=6.999, R=BASE_R (góra korpusu)
+      // Ring 4: Z=6.999, R=CENTER_HOLE_R (otwór wałka góra)
+      // Ring 5: Z=3.000, R=CENTER_HOLE_R (koniec cylindra / początek stożka)
+      // Ring 6: Z=1.500, R=COUNTERBORE_R (początek counterbore / koniec stożka)
+      // Ring 7: Z=0.000, R=COUNTERBORE_R (dno counterbore)
+
+      const numRings = 8;
+      const positions = new Float32Array(numRings * N * 3);
+      let pIdx = 0;
+
+      function setRing(rArray, z) {
+        for (let i = 0; i < N; i++) {
+          let r = (typeof rArray === 'number') ? rArray : rArray[i];
+          positions[pIdx++] = r * cosA[i];
+          positions[pIdx++] = r * sinA[i];
+          positions[pIdx++] = z;
+        }
+      }
+
+      setRing(radii, 0.0);             // Ring 0
+      setRing(radii, LOBE_H);           // Ring 1
+      setRing(BASE_R, LOBE_H);          // Ring 2
+      setRing(BASE_R, BODY_TOP_H);      // Ring 3
+      setRing(CENTER_HOLE_R, BODY_TOP_H); // Ring 4
+      setRing(CENTER_HOLE_R, 3.0);      // Ring 5
+      setRing(COUNTERBORE_R, COUNTERBORE_H); // Ring 6
+      setRing(COUNTERBORE_R, 0.0);      // Ring 7
+
+      const indices = [];
+      function addQuad(v1, v2, v3, v4) {
+        indices.push(v1, v2, v3);
+        indices.push(v1, v3, v4);
+      }
+
+      // 1. Płaszcz wieńca roboczego (Ring 0 -> Ring 1, na zewnątrz)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(0*N + i, 0*N + nxt, 1*N + nxt, 1*N + i);
+      }
+
+      // 2. Uskok wieńca na Z=4.499 (Ring 1 -> Ring 2, normalna +Z)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(1*N + i, 1*N + nxt, 2*N + nxt, 2*N + i);
+      }
+
+      // 3. Korpus cylindryczny górny (Ring 2 -> Ring 3, na zewnątrz)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(2*N + i, 2*N + nxt, 3*N + nxt, 3*N + i);
+      }
+
+      // 4. Górna ścianka czołowa na Z=7.0 (Ring 3 -> Ring 4, normalna +Z)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(3*N + i, 3*N + nxt, 4*N + nxt, 4*N + i);
+      }
+
+      // 5. Wewnętrzny otwór osi Z=7.0 .. 3.0 (Ring 4 -> Ring 5, do środka)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(4*N + i, 5*N + i, 5*N + nxt, 4*N + nxt);
+      }
+
+      // 6. Stożkowe przejście Z=3.0 .. 1.5 (Ring 5 -> Ring 6, do środka)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(5*N + i, 6*N + i, 6*N + nxt, 5*N + nxt);
+      }
+
+      // 7. Counterbore Z=1.5 .. 0.0 (Ring 6 -> Ring 7, do środka)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(6*N + i, 7*N + i, 7*N + nxt, 6*N + nxt);
+      }
+
+      // 8. Dno dolne na Z=0.0 (Ring 7 -> Ring 0, normalna -Z)
+      for (let i = 0; i < N; i++) {
+        let nxt = (i + 1) % N;
+        addQuad(7*N + i, 7*N + nxt, 0*N + nxt, 0*N + i);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    function updateThreeMesh() {
+      if (!scene) return;
+      if (camMeshGroup) scene.remove(camMeshGroup);
+
+      camMeshGroup = new THREE.Group();
+
+      const geom = generateCamGeometry();
+      // Środek w [0,0,0]
+      geom.translate(0, 0, -BODY_TOP_H / 2);
+      geom.rotateX(-Math.PI / 2);
+
+      // Materiał dysku Elna (szmaragdowo-srebrny styl bakelit / polimer)
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x059669,
+        metalness: 0.25,
+        roughness: 0.35,
+        wireframe: wireframeMode
+      });
+
+      const mainMesh = new THREE.Mesh(geom, material);
+      camMeshGroup.add(mainMesh);
+
+      // Oznaczenia górne: pierścień i wytłoczenie
+      const ringGeom = new THREE.TorusGeometry(2.65, 0.35, 12, 32);
+      const markMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 });
+      const ringMesh = new THREE.Mesh(ringGeom, markMat);
+      ringMesh.position.set(11.55, (BODY_TOP_H / 2) + 0.15, -7.25);
+      ringMesh.rotateX(Math.PI / 2);
+      camMeshGroup.add(ringMesh);
+
+      scene.add(camMeshGroup);
+    }
+
+    // ==============================================================================
+    // BEZPOŚREDNI EKSPORT STL (BINARNY, 0.01 S)
+    // ==============================================================================
+    function exportBinarySTL(geometry, filename) {
+      const pos = geometry.attributes.position;
+      const indices = geometry.index ? geometry.index.array : null;
+      const numTris = indices ? indices.length / 3 : pos.count / 3;
+
+      const bufferSize = 84 + numTris * 50;
+      const buffer = new ArrayBuffer(bufferSize);
+      const view = new DataView(buffer);
+
+      // 80 bajtów nagłówka
+      const header = `Elna Supermatic Cam - Binary STL - ${filename}`;
+      for (let i = 0; i < 80; i++) {
+        view.setUint8(i, i < header.length ? header.charCodeAt(i) : 32);
+      }
+
+      view.setUint32(80, numTris, true);
+
+      let offset = 84;
+      for (let t = 0; t < numTris; t++) {
+        const i1 = indices ? indices[t * 3] : t * 3;
+        const i2 = indices ? indices[t * 3 + 1] : t * 3 + 1;
+        const i3 = indices ? indices[t * 3 + 2] : t * 3 + 2;
+
+        const v1x = pos.getX(i1), v1y = pos.getY(i1), v1z = pos.getZ(i1);
+        const v2x = pos.getX(i2), v2y = pos.getY(i2), v2z = pos.getZ(i2);
+        const v3x = pos.getX(i3), v3y = pos.getY(i3), v3z = pos.getZ(i3);
+
+        // Normalna
+        const ax = v2x - v1x, ay = v2y - v1y, az = v2z - v1z;
+        const bx = v3x - v1x, by = v3y - v1y, bz = v3z - v1z;
+        let nx = ay * bz - az * by;
+        let ny = az * bx - ax * bz;
+        let nz = ax * by - ay * bx;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (len > 0.000001) { nx /= len; ny /= len; nz /= len; } else { nx = 0; ny = 0; nz = 1; }
+
+        view.setFloat32(offset, nx, true); offset += 4;
+        view.setFloat32(offset, ny, true); offset += 4;
+        view.setFloat32(offset, nz, true); offset += 4;
+
+        view.setFloat32(offset, v1x, true); offset += 4;
+        view.setFloat32(offset, v1y, true); offset += 4;
+        view.setFloat32(offset, v1z, true); offset += 4;
+
+        view.setFloat32(offset, v2x, true); offset += 4;
+        view.setFloat32(offset, v2y, true); offset += 4;
+        view.setFloat32(offset, v2z, true); offset += 4;
+
+        view.setFloat32(offset, v3x, true); offset += 4;
+        view.setFloat32(offset, v3y, true); offset += 4;
+        view.setFloat32(offset, v3z, true); offset += 4;
+
+        view.setUint16(offset, 0, true); offset += 2;
+      }
+
+      const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    }
+
+    function downloadStlDirect() {
+      const geom = generateCamGeometry();
+      const filename = `elna_cam_${currentCam.cam}.stl`;
+      exportBinarySTL(geom, filename);
+      showToast(`Pobrano gotowy plik ${filename} do druku 3D!`);
+    }
+
+    // --- Generowanie OpenSCAD ---
+    function buildScadCode() {
+      const N = (currentCam.mode === 'stepped') ? 36 : 144;
+      let pts = [];
+
+      if (currentCam.mode === 'stepped') {
+        for (let i = 0; i < 18; i++) {
+          let v = currentCam.values[i];
+          let r = BASE_R + (v / 3.0) * THROW;
+          let a = i * 20.0;
+          let a1 = (a - 4.5) * Math.PI / 180;
+          let a2 = (a + 4.5) * Math.PI / 180;
+          pts.push(`[${(r * Math.sin(a1)).toFixed(4)}, ${(r * Math.cos(a1)).toFixed(4)}]`);
+          pts.push(`[${(r * Math.sin(a2)).toFixed(4)}, ${(r * Math.cos(a2)).toFixed(4)}]`);
+        }
+      } else {
+        for (let i = 0; i < N; i++) {
+          let v = interpolateCyclic(currentCam.values, (i / N) * 18);
+          let r = BASE_R + (v / 3.0) * THROW;
+          let a = i * (360.0 / N) * Math.PI / 180;
+          pts.push(`[${(r * Math.sin(a)).toFixed(4)}, ${(r * Math.cos(a)).toFixed(4)}]`);
+        }
+      }
+
+      return `/*
+  Elna Supermatic Cam ${currentCam.cam}
+  Name: ${currentCam.name}
+  Generated via Elna Supermatic Cam Studio
+  License: GPL-3.0-or-later
+*/
+
+include <../measured_parametric_single_v1/_elna_measured_common.scad>;
+include <_elna_measured_common.scad>;
+
+profile_points = [
+        ${pts.join(',\n        ')}
+];
+
+icon_points = [[-1.000,0.040], [-0.889,0.960], [-0.778,0.040], [-0.667,0.960], [-0.556,0.040], [-0.444,0.960], [-0.333,0.040], [-0.222,0.960], [-0.111,0.040], [0.000,0.960], [0.111,0.040], [0.222,0.960], [0.333,0.040], [0.444,0.960], [0.556,0.040], [0.667,0.960], [0.778,0.040], [0.889,0.960], [1.000,0.040]];
+
+elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="${currentCam.cam}");
+`;
+    }
+
+    function updateScadPreview() {
+      const codeElem = document.getElementById('scadPreviewCode');
+      if (codeElem) codeElem.textContent = buildScadCode();
+    }
+
+    function downloadScadFile() {
+      const code = buildScadCode();
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cam_${currentCam.cam}.scad`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`Pobrano plik cam_${currentCam.cam}.scad!`);
+    }
+
+    function copyScadToClipboard() {
+      navigator.clipboard.writeText(buildScadCode()).then(() => {
+        showToast("Skopiowano kod OpenSCAD do schowka!");
+      });
+    }
+
+    function exportJsonProfile() {
+      const data = {
+        cam: currentCam.cam,
+        name: currentCam.name,
+        status: "custom",
+        profile_values_nominal_0_3: currentCam.values,
+        profile_radius_base_mm: BASE_R,
+        profile_throw_measured_mm: THROW,
+        surface_mode: currentCam.mode,
+        icon_kind: currentCam.icon,
+        fixed_dimensions: {
+          overall_diameter_mm: 43.64,
+          overall_radius_mm: OVERALL_R,
+          total_height_mm: TOTAL_H,
+          body_top_height_mm: BODY_TOP_H,
+          label_height_mm: 0.309,
+          lower_cam_lobe_height_mm: LOBE_H,
+          upper_round_body_radius_mm: BASE_R,
+          functional_lobe_min_radius_mm: BASE_R,
+          functional_lobe_max_radius_mm: OVERALL_R,
+          functional_lobe_throw_mm: THROW,
+          center_hole_radius_mm: CENTER_HOLE_R,
+          center_counterbore_radius_mm: COUNTERBORE_R,
+          center_counterbore_height_mm: COUNTERBORE_H,
+          center_cone_height_mm: CONE_H,
+          transport_slot_width_mm: TRANSPORT_W,
+          transport_slot_length_mm: TRANSPORT_LEN,
+          transport_slot_depth_mm: TRANSPORT_DEPTH,
+          transport_slot_gap_from_counterbore_mm: 1.0
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cam_${currentCam.cam}_profile.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`Wyeksportowano profil JSON: cam_${currentCam.cam}_profile.json`);
+    }
+
+    function handleJsonImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data.profile_values_nominal_0_3) && data.profile_values_nominal_0_3.length === 18) {
+            currentCam.cam = String(data.cam || "MY").padStart(2, '0');
+            currentCam.name = data.name || "Zaimportowany";
+            currentCam.values = data.profile_values_nominal_0_3;
+            currentCam.mode = data.surface_mode || "smooth";
+            currentCam.icon = data.icon_kind || "zigzag";
+
+            document.getElementById('camNumberInput').value = currentCam.cam;
+            document.getElementById('surfaceModeSelect').value = currentCam.mode;
+            document.getElementById('iconKindSelect').value = currentCam.icon;
+            document.getElementById('activeCamHeader').textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
+
+            updateStepBars();
+            updateThreeMesh();
+            drawFabricSimulation();
+            updateScadPreview();
+            showToast(`Wczytano pomyślnie profil krzywki ${currentCam.cam}!`);
+          } else {
+            alert("Błąd: Plik JSON musi zawierać 18 wartości w 'profile_values_nominal_0_3'");
+          }
+        } catch (err) {
+          alert("Błąd parsowania pliku JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- Zdarzenia UI ---
+    function setupEventListeners() {
+      document.getElementById('downloadStlBtn').addEventListener('click', downloadStlDirect);
+      document.getElementById('downloadScadBtn').addEventListener('click', downloadScadFile);
+      document.getElementById('copyScadBtn').addEventListener('click', copyScadToClipboard);
+      document.getElementById('copyCodeMiniBtn').addEventListener('click', copyScadToClipboard);
+      document.getElementById('exportJsonBtn').addEventListener('click', exportJsonProfile);
+      
+      document.getElementById('importJsonBtn').addEventListener('click', () => {
+        document.getElementById('jsonFileInput').click();
+      });
+      document.getElementById('jsonFileInput').addEventListener('change', handleJsonImport);
+
+      document.getElementById('helpBtn').addEventListener('click', () => {
+        document.getElementById('helpModal').style.display = 'flex';
+      });
+
+      // Zmiana numeru
+      document.getElementById('camNumberInput').addEventListener('input', (e) => {
+        currentCam.cam = e.target.value.trim() || "00";
+        document.getElementById('activeCamHeader').textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
+        updateThreeMesh();
+        updateScadPreview();
+      });
+
+      // Zmiana trybu powierzchni
+      document.getElementById('surfaceModeSelect').addEventListener('change', (e) => {
+        currentCam.mode = e.target.value;
+        updateThreeMesh();
+        drawFabricSimulation();
+        updateScadPreview();
+      });
+
+      // Zmiana piktogramu
+      document.getElementById('iconKindSelect').addEventListener('change', (e) => {
+        currentCam.icon = e.target.value;
+        updateThreeMesh();
+        updateScadPreview();
+      });
+
+      // Wyszukiwarka katalogu
+      document.getElementById('catalogSearchInput').addEventListener('input', (e) => {
+        const activeFilter = document.querySelector('.filter-pill.active')?.dataset.filter || 'all';
+        buildCatalogCards(activeFilter, e.target.value);
+      });
+
+      // Filtry katalogu
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const searchVal = document.getElementById('catalogSearchInput').value;
+          buildCatalogCards(btn.dataset.filter, searchVal);
+        });
+      });
+
+      // Kolory nici
+      document.querySelectorAll('.color-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+          document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+          dot.classList.add('active');
+          threadColor = dot.dataset.color;
+          drawFabricSimulation();
+        });
+      });
+
+      // Animacja maszyny
+      document.getElementById('animateSewingBtn').addEventListener('click', () => {
+        isSewingAnimated = !isSewingAnimated;
+        document.getElementById('animateSewingBtn').textContent = isSewingAnimated ? '⏹ Zatrzymaj' : '▶ Uruchom maszynę';
+      });
+
+      // Narzędzia 3D
+      document.getElementById('toggleRotateBtn').addEventListener('click', (e) => {
+        autoRotate = !autoRotate;
+        e.currentTarget.classList.toggle('active', autoRotate);
+      });
+
+      document.getElementById('toggleWireframeBtn').addEventListener('click', (e) => {
+        wireframeMode = !wireframeMode;
+        e.currentTarget.classList.toggle('active', wireframeMode);
+        updateThreeMesh();
+      });
+
+      document.getElementById('resetCameraBtn').addEventListener('click', () => {
+        camera.position.set(40, 32, 55);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+
+      document.getElementById('viewTopBtn').addEventListener('click', () => {
+        camera.position.set(0, 70, 0.001);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+
+      document.getElementById('viewBottomBtn').addEventListener('click', () => {
+        camera.position.set(0, -70, 0.001);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+
+      document.getElementById('viewIsoBtn').addEventListener('click', () => {
+        camera.position.set(40, 32, 55);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+    }
+
+    function closeHelpModal() {
+      document.getElementById('helpModal').style.display = 'none';
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2600);
+    }
+  </script>
+</body>
+</html>
+'''
+
+# Write to root index.html
+index_p = Path('index.html')
+index_p.write_text(HTML_TEMPLATE, encoding='utf-8')
+print(f"Generated root {index_p} ({index_p.stat().st_size} bytes)")
+
+# Also write to tools/generator/index.html (for offline launcher consistency)
+tools_gen_p = Path('tools/generator/index.html')
+tools_gen_p.parent.mkdir(parents=True, exist_ok=True)
+tools_gen_p.write_text(HTML_TEMPLATE, encoding='utf-8')
+print(f"Generated {tools_gen_p} ({tools_gen_p.stat().st_size} bytes)")
