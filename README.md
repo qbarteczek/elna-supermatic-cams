@@ -22,7 +22,7 @@ W odróżnieniu od maszyn ze stałymi bębnami wielościegowymi, Elna wykorzystu
 
 1. **🌐 Interaktywna aplikacja Webowa Online ([https://qbarteczek.github.io/elna-supermatic-cams/](https://qbarteczek.github.io/elna-supermatic-cams/)):**
    - **Podgląd 3D w czasie rzeczywistym (WebGL / Three.js):** natychmiastowe obracanie i oglądanie dysku z ząbkami wieńca, stożkowym otworem montażowym i gniazdem zabieraka.
-   - **Bezpośrednie pobieranie STL:** klikasz *„💾 Pobierz STL do druku 3D”* i w 0.01 sekundy otrzymujesz szczelny (watertight / 2-manifold) plik `.stl` do wrzucenia do slicera (Bambu Studio, OrcaSlicer, PrusaSlicer, Cura).
+   - **Bezpośrednie pobieranie STL:** klikasz *„💾 Pobierz STL do druku 3D”* i otrzymujesz szczelny (watertight / 2-manifold) plik `.stl` do slicera (Bambu Studio, OrcaSlicer, PrusaSlicer, Cura). Krzywki z katalogu pobierasz jako gotowe pliki z `stls/` (z napisami); zmieniony profil jest liczony w przeglądarce (z otworem i gniazdem zabieraka, bez wypukłych napisów – pełny model z napisami daje *„Pobierz .scad”*).
    - **Wirtualne przeszycie na tkaninie:** podgląd nici na żywo dla 18 kroków pełnego obrotu dysku z animacją pracy maszyny.
    - **Katalog 34 krzywek fabrycznych:** 1-klikowe ładowanie profili od 01 do 34.
    - **Edytor 18-krokowy:** pełna swoboda tworzenia własnych ściegów z narzędziami generowania sinusoidy, schodków, zygzaka czy muszelki.
@@ -46,6 +46,24 @@ Dyski generowane są na podstawie ścisłych wymiarów nominalnych:
 
 ---
 
+### 🖨️ Druk: korpus + pierścień
+
+Każda krzywka ma dwa pliki: `stls/cam_XX.stl` (cały dysk) i `stls/cam_XX_body.stl` (korpus bez dolnego pierścienia). Dolny pierścień `stls/universal_ring.stl` (1,2 mm) jest jeden dla wszystkich krzywek.
+
+- **Zalecane (FDM):** wydrukuj korpus płaskim spodem na stole (napisy do góry, bez podpór) i pierścień; przyklej pierścień pod korpus tak, żeby pokryły się otwory gniazda zabieraka. Razem: 7,31 mm, dokładnie jak cały dysk.
+- **Cały dysk w jednym kawałku:** wieniec zaczyna się 1,2 mm nad dnem (jak w oryginale), więc na FDM potrzebne są podpory pod wieńcem; dobre dla drukarek żywicznych.
+- **Orientacja profilu:** krok 1 jest wyśrodkowany na gnieździe zabieraka (pod napisem SWISS MADE z kółkiem), kolejne kroki co 20° zgodnie z ruchem wskazówek zegara patrząc z góry. 18 nacięć na krawędzi wierzchu to środki kroków.
+
+### 🔧 Zmiana profili i przeliczanie modeli
+
+Źródłem danych są pliki `models/measured_parametric_single_v1/profiles/cam_XX_profile.json`, a wzór profilu i piktogramy siedzą w `tools/generate_cam.py`. Po zmianie:
+
+```bash
+python tools/validate_profiles.py     # kontrola 18 wartości 0..3
+python tools/regenerate_scad.py       # pliki .scad, customizer, dane w index.html
+tools/render_all_stls.sh              # wszystkie STL (OPENSCAD=/ścieżka/do/openscad, najlepiej 2024+)
+```
+
 ### 📚 Pełny indeks 34 krzywek w repozytorium
 
 | Numer | Nazwa ściegu | Status | Wieniec | Zastosowanie |
@@ -56,34 +74,34 @@ Dyski generowane są na podstawie ścisłych wymiarów nominalnych:
 | **04** | Long scallop | candidate | smooth | Długa muszelka ozdobna |
 | **05** | Scallop | candidate | smooth | Klasyczna muszelka brzegowa |
 | **06** | Wide zigzag | candidate | stepped | Zygzak szeroki dwustopniowy |
-| **07** | Decorative zigzag | candidate | smooth | Zygzak ozdobny ząbkowany |
+| **07** | Decorative zigzag | candidate | stepped | Zygzak ozdobny ząbkowany |
 | **08** | Slanted bars | candidate | stepped | Paski skośne / jodełka |
 | **09** | W stitch | candidate | stepped | Ścieg w kształcie litery W |
 | **10** | Blind hem | candidate | stepped | Ścieg kryty do podszywania |
-| **11** | Arrows | candidate | smooth | Strzałki geometryczne |
-| **12** | Spindle | candidate | smooth | Wrzeciono / kropla satynowa |
-| **13** | Source profile 13 | source-profile | smooth | Profil bazowy z projektu źródłowego |
+| **11** | Arrows | candidate | stepped | Strzałki geometryczne |
+| **12** | Spindle | candidate | stepped | Wrzeciono / kropla satynowa |
+| **13** | Source profile 13 | source-profile | stepped | Profil bazowy z projektu źródłowego |
 | **14** | Loop wave | candidate | smooth | Pętle faliste |
 | **15** | Triangle | candidate | stepped | Trójkąty ostre |
 | **16** | Source profile 16 | source-profile | smooth | Profil bazowy z projektu źródłowego |
-| **17** | Round pulses | candidate | stepped | Impulsy zaokrąglone |
+| **17** | Round pulses | candidate | smooth | Impulsy zaokrąglone |
 | **18** | Deep scallop | candidate | smooth | Głęboka muszelka satynowa |
 | **19** | Dense zigzag | candidate | stepped | Zygzak gęsty |
 | **20** | Source profile 20 | source-profile | stepped | Profil bazowy z projektu źródłowego |
-| **21** | Stair zigzag | candidate | smooth | Zygzak schodkowy |
+| **21** | Stair zigzag | candidate | stepped | Zygzak schodkowy |
 | **22** | Small lobes | candidate | smooth | Drobne łuski |
-| **23** | Sharp triangles | candidate | smooth | Trójkąty wyostrzone |
+| **23** | Sharp triangles | candidate | stepped | Trójkąty wyostrzone |
 | **24** | Small scallop | candidate | smooth | Drobna muszelka |
 | **25** | Large sine wave | candidate | smooth | Duża sinusoida |
 | **26** | Wave variant | candidate | smooth | Wariant fali symetrycznej |
 | **27** | Irregular pulse | candidate | stepped | Impuls nieregularny |
 | **28** | Vertical ticks | candidate | stepped | Pionowe kreski / grzebyk |
-| **29** | Comb alternate | candidate | smooth | Grzebyk naprzemienny |
+| **29** | Comb alternate | candidate | stepped | Grzebyk naprzemienny |
 | **30** | Uneven wave | candidate | smooth | Fala asymetryczna |
 | **31** | Block sawtooth | candidate | stepped | Zęby piły blokowe |
-| **32** | Slanted bars | candidate | smooth | Paski skośne gładkie |
-| **33** | Source profile 33 | source-profile | smooth | Profil bazowy z projektu źródłowego |
-| **34** | Extra decorative | candidate | smooth | Złożony ścieg dekoracyjny |
+| **32** | Slanted bars | candidate | stepped | Paski skośne gładkie |
+| **33** | Source profile 33 | source-profile | stepped | Profil bazowy z projektu źródłowego |
+| **34** | Extra decorative | candidate | stepped | Złożony ścieg dekoracyjny |
 
 ---
 
@@ -109,15 +127,18 @@ Dyski generowane są na podstawie ścisłych wymiarów nominalnych:
 ├── models/
 │   ├── measured_parametric_single_v1/   # Gotowe modele OpenSCAD dla krzywek 01–34
 │   │   ├── _elna_measured_common.scad   # Główna baza wymiarowa
-│   │   ├── cam_01.scad ... cam_34.scad  # Pliki modeli
+│   │   ├── cam_01.scad ... cam_34.scad  # Cały dysk (+ cam_XX_body.scad: korpus do druku)
+│   │   ├── universal_ring.scad          # Wspólny pierścień dolny
 │   │   └── profiles/                    # Profile JSON dla wszystkich 34 krzywek
 ├── tools/
-│   ├── build_index_html.py              # Skrypt kompilujący index.html z presetami
-│   ├── generate_cam.py                  # Narzędzie CLI do generowania SCAD i JSON
+│   ├── generate_cam.py                  # CLI + wspólny wzór profilu i piktogramy
+│   ├── regenerate_scad.py               # Przelicza .scad, customizer i dane w index.html z profili JSON
+│   ├── render_all_stls.sh               # Renderuje wszystkie STL do stls/
+│   ├── validate_profiles.py             # Kontrola profili JSON
 │   ├── openscad/
 │   │   └── elna_cam_generator.scad      # Generator OpenSCAD z panelem Customizer
 │   └── generator/
-│       └── index.html                   # Kopia aplikacji webowej do pracy offline
+│       └── index.html                   # Przekierowanie do głównego index.html
 └── LICENSE                              # Licencja GPL-3.0
 ```
 

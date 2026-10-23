@@ -1,107 +1,149 @@
-import os
-import json
-import re
-import math
+#!/usr/bin/env python3
+"""
+Regenerates everything that is derived from the cam profiles.
 
-N = 18
-BASE_R = 18.55
-THROW_R = 3.27
+Source of truth:
+  models/measured_parametric_single_v1/profiles/cam_XX_profile.json  (values, mode, icon, name, status)
+  tools/generate_cam.py                                              (profile math, pictograms)
 
-scad_dir = "models/measured_parametric_single_v1"
-profiles_dir = os.path.join(scad_dir, "profiles")
+Writes:
+  models/measured_parametric_single_v1/cam_XX.scad       (assembly)
+  models/measured_parametric_single_v1/cam_XX_body.scad  (printable body)
+  models/measured_parametric_single_v1/profiles/*.json   (normalised, fixed dimensions refreshed)
+  models/measured_parametric_single_v1/_elna_measured_common.scad  (block <generated:icons>)
+  tools/openscad/elna_cam_generator.scad                 (block <generated:presets>)
+  tools/all_profiles_dump.json
+  index.html                                             (block <generated:presets>)
 
-def generate_stepped_points(values):
-    pts = []
-    N_local = len(values)
-    step = 360.0 / N_local
-    for i in range(N_local):
-        a0 = (i / N_local) * math.pi * 2
-        a1 = ((i + 1) / N_local) * math.pi * 2
-        r = BASE_R + (values[i] / 3.0) * THROW_R
-        offset = (step / 2.0) * (math.pi / 180.0)
-        pts.append((math.sin(a0 + offset * 0.3) * r, math.cos(a0 + offset * 0.3) * r))
-        pts.append((math.sin(a1 - offset * 0.3) * r, math.cos(a1 - offset * 0.3) * r))
-    return pts
+Then render the STL files: tools/render_all_stls.sh
 
-def generate_smooth_points(values):
-    pts = []
-    N_local = len(values)
-    for deg in range(0, 360, 2):
-        fi = (deg / 360.0) * N_local
-        i0 = int(math.floor(fi)) % N_local
-        i1 = (i0 + 1) % N_local
-        t = fi - math.floor(fi)
-        
-        t_smooth = (1 - math.cos(t * math.pi)) / 2
-        v = values[i0] * (1 - t_smooth) + values[i1] * t_smooth
-        
-        r = BASE_R + (v / 3.0) * THROW_R
-        angle = (deg / 180.0) * math.pi - math.pi / 2
-        pts.append((math.sin(angle + math.pi/2) * r, math.cos(angle + math.pi/2) * r))
-    return pts
-
-def main():
-    icons = {}
-    for i in range(1, 35):
-        cam = f"{i:02d}"
-        scad_path = os.path.join(scad_dir, f"cam_{cam}.scad")
-        if os.path.exists(scad_path):
-            with open(scad_path, 'r') as f:
-                content = f.read()
-                m = re.search(r'icon_points\s*=\s*(\[.*?\]);', content)
-                if m:
-                    icons[cam] = m.group(1)
-
-    for i in range(1, 35):
-        cam = f"{i:02d}"
-        json_path = os.path.join(profiles_dir, f"cam_{cam}_profile.json")
-        if not os.path.exists(json_path):
-            continue
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        
-        values = data['profile_values_nominal_0_3']
-        surface_mode = data.get('surface_mode', 'smooth')
-        name = data.get('name', 'Custom cam')
-        status = data.get('status', 'candidate')
-        
-        if surface_mode == 'stepped':
-            pts = generate_stepped_points(values)
-        else:
-            pts = generate_smooth_points(values)
-            
-        pts_str = ",\n".join([f"        [{x:.4f}, {y:.4f}]" for x, y in pts])
-        icon_str = icons.get(cam, "[[-1,0.5],[0,0],[1,0.5]]")
-        
-        base_header = f"""/*
-  Elna Supermatic cam {cam}
-  Name: {name}
-  Status: {status}
-
-  Generated from measured parametric base v2.
-  Surface mode: {surface_mode}
-*/
-
-include <_elna_measured_common.scad>;
-
-profile_points = [
-{pts_str}
-];
-
-icon_points = {icon_str};
+Run from the repository root:  python tools/regenerate_scad.py
 """
 
-        # 1. Full assembly
-        out_scad_full = base_header + f'\nelna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="{cam}");\n'
-        with open(os.path.join(scad_dir, f"cam_{cam}.scad"), 'w') as f:
-            f.write(out_scad_full)
+import json
+import re
+import sys
+from pathlib import Path
 
-        # 2. Printable Body (no ring)
-        out_scad_body = base_header + f'\nelna_cam_body(profile_points=profile_points, icon_points=icon_points, number_text="{cam}");\n'
-        with open(os.path.join(scad_dir, f"cam_{cam}_body.scad"), 'w') as f:
-            f.write(out_scad_body)
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
 
-    print("Regenerated all SCAD files (full, body).")
+import generate_cam as gc  # noqa: E402
 
-if __name__ == '__main__':
+SCAD_DIR = ROOT / "models" / "measured_parametric_single_v1"
+PROFILES_DIR = SCAD_DIR / "profiles"
+COMMON_SCAD = SCAD_DIR / "_elna_measured_common.scad"
+CUSTOMIZER_SCAD = ROOT / "tools" / "openscad" / "elna_cam_generator.scad"
+DUMP_JSON = ROOT / "tools" / "all_profiles_dump.json"
+HTML_FILES = [ROOT / "index.html"]
+
+
+def replace_block(text, tag, new_body, path):
+    """Replace the lines between '<generated:TAG>' and '</generated:TAG>' markers."""
+    pattern = re.compile(r"(<generated:%s>[^\n]*\n)(.*?)(\n[^\n]*</generated:%s>)" % (tag, tag), re.S)
+    if not pattern.search(text):
+        raise SystemExit(f"Marker <generated:{tag}> not found in {path}")
+    return pattern.sub(lambda m: m.group(1) + new_body + m.group(3), text, count=1)
+
+
+def scad_list(points, ndigits=3):
+    return "[" + ",".join(f"[{round(x, ndigits)},{round(y, ndigits)}]" for x, y in points) + "]"
+
+
+def load_profiles():
+    profiles = []
+    for path in sorted(PROFILES_DIR.glob("cam_*_profile.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        values = data["profile_values_nominal_0_3"]
+        if len(values) != gc.STEPS:
+            raise SystemExit(f"{path.name}: expected {gc.STEPS} values, got {len(values)}")
+        if data.get("surface_mode") not in ("stepped", "smooth"):
+            raise SystemExit(f"{path.name}: unknown surface_mode {data.get('surface_mode')!r}")
+        if data.get("icon_kind") not in gc.ICON_POINTS:
+            raise SystemExit(f"{path.name}: unknown icon_kind {data.get('icon_kind')!r}")
+        profiles.append((path, data))
+    return profiles
+
+
+def write_cam_scads(profiles):
+    for _, d in profiles:
+        cam = d["cam"]
+        pts = gc.generate_profile_points(d["profile_values_nominal_0_3"], d["surface_mode"])
+        icon = gc.generate_icon_points(d["icon_kind"])
+        for part, suffix in (("assembly", ""), ("body", "_body")):
+            code = gc.build_scad_content(cam, d["name"], pts, icon, status=d.get("status", "candidate"),
+                                         mode=d["surface_mode"], part=part)
+            (SCAD_DIR / f"cam_{cam}{suffix}.scad").write_text(code, encoding="utf-8")
+
+
+def write_profile_jsons(profiles):
+    for path, d in profiles:
+        fresh = gc.profile_json(d["cam"], d["name"], d.get("status", "candidate"),
+                                d["profile_values_nominal_0_3"], d["surface_mode"], d["icon_kind"])
+        path.write_text(json.dumps(fresh, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def presets_list(profiles):
+    return [{
+        "cam": d["cam"],
+        "name": d["name"],
+        "status": d.get("status", "candidate"),
+        "values": d["profile_values_nominal_0_3"],
+        "mode": d["surface_mode"],
+        "icon": d["icon_kind"],
+    } for _, d in profiles]
+
+
+def write_common_icons():
+    lines = ["function elna_icon_points(kind) ="]
+    for kind, pts in gc.ICON_POINTS.items():
+        lines.append(f'    (kind == "{kind}") ? {scad_list(pts)} :')
+    lines.append(f"    {scad_list(gc.ICON_POINTS['zigzag'])};")
+    text = COMMON_SCAD.read_text(encoding="utf-8")
+    COMMON_SCAD.write_text(replace_block(text, "icons", "\n".join(lines), COMMON_SCAD), encoding="utf-8")
+
+
+def write_customizer(presets):
+    def table(name, key, fmt, default):
+        out = [f"function {name}(p) ="]
+        for p in presets:
+            out.append(f'    (p == "{p["cam"]}") ? {fmt(p[key])} :')
+        out.append(f"    {default};")
+        return "\n".join(out)
+
+    body = "\n".join([
+        table("preset_values", "values", lambda v: json.dumps(v).replace(" ", ""), "undef"),
+        table("preset_mode", "mode", lambda v: f'"{v}"', '"stepped"'),
+        table("preset_icon", "icon", lambda v: f'"{v}"', '"zigzag"'),
+    ])
+    text = CUSTOMIZER_SCAD.read_text(encoding="utf-8")
+    CUSTOMIZER_SCAD.write_text(replace_block(text, "presets", body, CUSTOMIZER_SCAD), encoding="utf-8")
+
+
+def write_html(presets):
+    js = "\n".join([
+        "    const CAM_PRESETS = " + json.dumps(presets, ensure_ascii=False) + ";",
+        "    const ICON_POINTS = " + json.dumps(gc.ICON_POINTS) + ";",
+        "    const ICON_LABELS = " + json.dumps(gc.ICON_LABELS_PL, ensure_ascii=False) + ";",
+    ])
+    for path in HTML_FILES:
+        text = path.read_text(encoding="utf-8")
+        path.write_text(replace_block(text, "presets", js, path), encoding="utf-8", newline="\n")
+
+
+def main():
+    profiles = load_profiles()
+    presets = presets_list(profiles)
+    write_profile_jsons(profiles)
+    write_cam_scads(profiles)
+    write_common_icons()
+    write_customizer(presets)
+    DUMP_JSON.write_text(json.dumps(presets, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_html(presets)
+    print(f"Regenerated {len(presets)} cams: SCAD (assembly + body), profiles, customizer, "
+          f"library icons, {DUMP_JSON.name}, index.html.")
+    print("Next: render STL files with tools/render_all_stls.sh")
+
+
+if __name__ == "__main__":
     main()

@@ -955,9 +955,9 @@
           <div class="three-option-group">
             <span class="three-option-label">Komponent:</span>
             <div class="pill-selector" id="partSelector">
-              <button class="pill-btn active" data-part="assembly" title="Pełny dysk z dolnym rantem">Całość (Assembly)</button>
-              <button class="pill-btn" data-part="body" title="Korpus v2 do druku bez podpór (płaski spód)">Korpus (Body v2)</button>
-              <button class="pill-btn" data-part="ring" title="Osobny uniwersalny pierścień dolny">Pierścień (Ring)</button>
+              <button class="pill-btn active" data-part="assembly" title="Cały dysk w jednym kawałku (do druku wymaga podpór pod wieńcem)">Całość (Assembly)</button>
+              <button class="pill-btn" data-part="body" title="Korpus do druku bez podpór: płaski spód na stole, napisy do góry">Korpus (Body)</button>
+              <button class="pill-btn" data-part="ring" title="Uniwersalny pierścień dolny 1,2 mm — wspólny dla wszystkich krzywek, przyklejany pod korpus">Pierścień (Ring)</button>
             </div>
           </div>
 
@@ -1161,10 +1161,7 @@
           <div class="param-group">
             <label class="param-label" for="iconKindSelect">Piktogram ściegu:</label>
             <select id="iconKindSelect" class="form-control">
-              <option value="zigzag">Zygzak</option>
-              <option value="step">Schodkowy / Trójskok</option>
-              <option value="wave">Płynna fala</option>
-              <option value="blind">Ścieg kryty</option>
+              <!-- Opcje z ICON_LABELS (generowane w JS) -->
             </select>
           </div>
         </div>
@@ -1197,6 +1194,7 @@
           <li><b>Wysokość całkowita:</b> 7.31 mm (korpus 7.0 mm + oznaczenia 0.31 mm)</li>
           <li><b>Dolny wieniec roboczy:</b> wysokość 4.5 mm, promień bazowy 18.55 mm, maksymalny 21.82 mm (skok 3.27 mm)</li>
           <li><b>Mocowanie:</b> otwór fi 16.5 mm (r=8.25 mm) ze stożkowym pogłębieniem 1.5 mm (r=9.5 mm) i gniazdem zabieraka 3.0×4.1 mm (głębokość 5.5 mm).</li>
+          <li><b>Orientacja profilu:</b> krok 1 jest wyśrodkowany na gnieździe zabieraka (pod napisem SWISS MADE), kolejne co 20° zgodnie z ruchem wskazówek zegara; 18 nacięć na krawędzi wierzchu pokazuje środki kroków.</li>
         </ul>
 
         <h3 style="color: #fff; font-size: 0.95rem; margin-top: 0.5rem;">🖨️ Zalecane parametry druku 3D (FDM):</h3>
@@ -1204,12 +1202,13 @@
           <li><b>Materiał:</b> PETG (zalecany) lub PLA / ABS / ASA.</li>
           <li><b>Wysokość warstwy:</b> 0.12 – 0.16 mm dla maksymalnej gładkości krzywki.</li>
           <li><b>Ścianki / Wypełnienie:</b> 4–5 obrysów (walls) lub 100% infill (dysk musi być sztywny).</li>
-          <li><b>Orientacja na stole:</b> Płasko, podstawą (spodem) do stołu roboczego. Brak podpór (support free).</li>
+          <li><b>Korpus + pierścień (zalecane):</b> korpus płaskim spodem na stole, napisy do góry, bez podpór; pierścień płasko. Pierścień przyklej pod korpus tak, by otwory gniazda zabieraka się pokryły — razem dają pełne 7,31 mm.</li>
+          <li><b>Całość w jednym kawałku:</b> wieniec zaczyna się 1,2 mm nad dnem (jak w oryginale), więc FDM wymaga podpór pod wieńcem; dobra opcja dla drukarek żywicznych.</li>
         </ul>
 
         <h3 style="color: #fff; font-size: 0.95rem; margin-top: 0.5rem;">💾 Dwa sposoby zapisu:</h3>
-        <p>1. <b>Bezpośredni STL (0.01 s):</b> Kliknij zielony przycisk w prawym górnym rogu. Plik pobierze się od razu i możesz go otworzyć w Bambu Studio, OrcaSlicer lub PrusaSlicer.<br>
-        2. <b>OpenSCAD (.scad):</b> Jeśli wolisz kompilować kod lokalnie w OpenSCAD, kliknij przycisk „Pobierz .scad”.</p>
+        <p>1. <b>Bezpośredni STL:</b> zielony przycisk w prawym górnym rogu. Dla krzywek z katalogu pobierasz gotowy plik z repozytorium (z napisami). Dla zmienionego profilu STL powstaje w przeglądarce — z otworem i gniazdem zabieraka, ale bez wypukłych napisów.<br>
+        2. <b>OpenSCAD (.scad):</b> „Pobierz .scad” daje pełny model z numerem, piktogramem i napisami. Zapisz plik w <code>models/measured_parametric_single_v1/</code> i otwórz w OpenSCAD.</p>
       </div>
       <button class="btn btn-stl" style="align-self: flex-end;" onclick="closeHelpModal()">Rozumiem, wracam do projektowania</button>
     </div>
@@ -1219,8 +1218,12 @@
 
   <!-- Skrypt Aplikacji -->
   <script>
-    // Baza 34 profili fabrycznych Elna Supermatic
+    // Baza 34 profili fabrycznych Elna Supermatic + piktogramy
+    // <generated:presets> — tools/regenerate_scad.py, nie edytować ręcznie
     const CAM_PRESETS = [{"cam": "01", "name": "Elastic multi-step", "status": "candidate", "values": [0.5, 1.2, 2.1, 2.8, 2.1, 1.2, 0.5, 1.2, 2.1, 2.8, 2.1, 1.2, 0.5, 1.2, 2.1, 2.8, 2.1, 1.2], "mode": "smooth", "icon": "step"}, {"cam": "02", "name": "Serpentine", "status": "candidate", "values": [1.5, 2.2, 2.8, 2.9, 2.2, 1.5, 0.8, 0.2, 0.1, 0.8, 1.5, 2.2, 2.8, 2.9, 2.2, 1.5, 0.8, 0.2], "mode": "smooth", "icon": "wave"}, {"cam": "03", "name": "Zigzag reference", "status": "uploaded-stl/scad-reference", "values": [0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3], "mode": "stepped", "icon": "zigzag"}, {"cam": "04", "name": "Long scallop", "status": "candidate", "values": [0, 0.2, 0.8, 1.8, 2.7, 3.0, 2.7, 1.8, 0.8, 0.2, 0, 0.2, 0.8, 1.8, 2.7, 3.0, 2.7, 1.8], "mode": "smooth", "icon": "scallop"}, {"cam": "05", "name": "Scallop", "status": "candidate", "values": [0, 0.8, 2.2, 3, 2.2, 0.8, 0, 0.8, 2.2, 3, 2.2, 0.8, 0, 0.8, 2.2, 3, 2.2, 0.8], "mode": "smooth", "icon": "scallop"}, {"cam": "06", "name": "Wide zigzag", "status": "candidate", "values": [0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5], "mode": "stepped", "icon": "zigzag"}, {"cam": "07", "name": "Decorative zigzag", "status": "candidate", "values": [0, 2.6, 1.2, 3, 0.4, 2.8, 0, 2.6, 1.2, 3, 0.4, 2.8, 0, 2.6, 1.2, 3, 0.4, 2.8], "mode": "stepped", "icon": "saw"}, {"cam": "08", "name": "Slanted bars", "status": "candidate", "values": [0, 0.5, 1, 1.5, 2, 2.5, 3, 2.5, 2, 1.5, 1, 0.5, 0, 0.5, 1, 1.5, 2, 2.5], "mode": "stepped", "icon": "step"}, {"cam": "09", "name": "W stitch", "status": "candidate", "values": [0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 3], "mode": "stepped", "icon": "saw"}, {"cam": "10", "name": "Blind hem", "status": "candidate", "values": [1.5, 1.5, 1.5, 0, 3, 0, 1.5, 1.5, 1.5, 0, 3, 0, 1.5, 1.5, 1.5, 0, 3, 0], "mode": "stepped", "icon": "blind"}, {"cam": "11", "name": "Arrows", "status": "candidate", "values": [0, 3, 0, 0.5, 2.5, 0.5, 0, 3, 0, 0.5, 2.5, 0.5, 0, 3, 0, 0.5, 2.5, 0.5], "mode": "stepped", "icon": "arrows"}, {"cam": "12", "name": "Spindle", "status": "candidate", "values": [0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1], "mode": "stepped", "icon": "spindle"}, {"cam": "13", "name": "Source profile 13", "status": "source-profile", "values": [1.5, 0, 1.5, 0, 1.5, 0, 1.5, 0, 1.5, 1.5, 3, 1.5, 3, 1.5, 3, 1.5, 3, 1.5], "mode": "stepped", "icon": "step"}, {"cam": "14", "name": "Loop wave", "status": "candidate", "values": [0.5, 1.4, 2.7, 3, 2.3, 1.2, 0.2, 0, 0.7, 1.8, 2.9, 2.8, 1.7, 0.6, 0.1, 0.8, 1.9, 2.8], "mode": "smooth", "icon": "wave"}, {"cam": "15", "name": "Triangle", "status": "candidate", "values": [0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5], "mode": "stepped", "icon": "saw"}, {"cam": "16", "name": "Source profile 16", "status": "source-profile", "values": [1.5, 2.25, 1.5, 0.75, 1.5, 2.25, 3, 2.25, 1.5, 0.75, 0, 0.75, 1.5, 2.25, 1.5, 0.75, 1.5, 1.5], "mode": "smooth", "icon": "wave"}, {"cam": "17", "name": "Round pulses", "status": "candidate", "values": [1.5, 2.7, 3, 2.7, 1.5, 0.3, 0, 0.3, 1.5, 2.7, 3, 2.7, 1.5, 0.3, 0, 0.3, 1.5, 2.7], "mode": "smooth", "icon": "pulse"}, {"cam": "18", "name": "Deep scallop", "status": "candidate", "values": [0, 0.4, 1.4, 2.6, 3, 2.6, 1.4, 0.4, 0, 0.4, 1.4, 2.6, 3, 2.6, 1.4, 0.4, 0, 0.4], "mode": "smooth", "icon": "scallop"}, {"cam": "19", "name": "Dense zigzag", "status": "candidate", "values": [0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3], "mode": "stepped", "icon": "comb"}, {"cam": "20", "name": "Source profile 20", "status": "source-profile", "values": [0, 3, 0, 3, 0, 3, 0, 3, 0, 2.25, 0.75, 2.25, 0.75, 2.25, 0.75, 2.25, 0.75, 2.25], "mode": "stepped", "icon": "step"}, {"cam": "21", "name": "Stair zigzag", "status": "candidate", "values": [0, 0.6, 1.2, 1.8, 2.4, 3, 2.4, 1.8, 1.2, 0.6, 0, 0.6, 1.2, 1.8, 2.4, 3, 2.4, 1.8], "mode": "stepped", "icon": "step"}, {"cam": "22", "name": "Small lobes", "status": "candidate", "values": [1.5, 2.6, 2.2, 1.5, 0.8, 0.4, 1.5, 2.6, 2.2, 1.5, 0.8, 0.4, 1.5, 2.6, 2.2, 1.5, 0.8, 0.4], "mode": "smooth", "icon": "pulse"}, {"cam": "23", "name": "Sharp triangles", "status": "candidate", "values": [0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5], "mode": "stepped", "icon": "saw"}, {"cam": "24", "name": "Small scallop", "status": "candidate", "values": [0.2, 1.2, 2.7, 3, 2.7, 1.2, 0.2, 1.2, 2.7, 3, 2.7, 1.2, 0.2, 1.2, 2.7, 3, 2.7, 1.2], "mode": "smooth", "icon": "scallop"}, {"cam": "25", "name": "Large sine wave", "status": "candidate", "values": [1.5, 2.5, 3, 2.5, 1.5, 0.5, 0, 0.5, 1.5, 2.5, 3, 2.5, 1.5, 0.5, 0, 0.5, 1.5, 2.5], "mode": "smooth", "icon": "wave"}, {"cam": "26", "name": "Wave variant", "status": "candidate", "values": [0.2, 1, 2.2, 3, 2.4, 1.6, 0.8, 0, 0.6, 1.8, 2.8, 2.6, 1.4, 0.4, 0.2, 1.2, 2.5, 3], "mode": "smooth", "icon": "wave"}, {"cam": "27", "name": "Irregular pulse", "status": "candidate", "values": [1.5, 2.6, 0.5, 2.8, 1, 2.4, 0.3, 2.9, 1.2, 2.5, 0.6, 2.7, 0.4, 2.8, 1, 2.4, 0.6, 2.6], "mode": "stepped", "icon": "pulse"}, {"cam": "28", "name": "Vertical ticks", "status": "candidate", "values": [1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3, 1.5, 0, 1.5, 3], "mode": "stepped", "icon": "comb"}, {"cam": "29", "name": "Comb alternate", "status": "candidate", "values": [0, 3, 0, 3, 1.5, 3, 1.5, 0, 1.5, 0, 3, 0, 3, 1.5, 3, 1.5, 0, 1.5], "mode": "stepped", "icon": "comb"}, {"cam": "30", "name": "Uneven wave", "status": "candidate", "values": [1.5, 2.8, 1, 2.4, 0.4, 1.9, 0, 1.2, 2.6, 1.5, 2.9, 1.1, 2.2, 0.2, 1.5, 0.1, 1.6, 2.7], "mode": "smooth", "icon": "wave"}, {"cam": "31", "name": "Block sawtooth", "status": "candidate", "values": [0, 3, 3, 0, 1.5, 3, 0, 3, 3, 0, 1.5, 3, 0, 3, 3, 0, 1.5, 3], "mode": "stepped", "icon": "saw"}, {"cam": "32", "name": "Slanted bars", "status": "candidate", "values": [0, 0.5, 1, 1.5, 2, 2.5, 3, 0, 0.5, 1, 1.5, 2, 2.5, 3, 0, 0.5, 1, 1.5], "mode": "stepped", "icon": "step"}, {"cam": "33", "name": "Source profile 33", "status": "source-profile", "values": [0, 3, 0, 3, 0, 3, 0, 3, 0, 1.5, 0, 1.5, 0, 1.5, 0, 1.5, 0, 1.5], "mode": "stepped", "icon": "hi-lo"}, {"cam": "34", "name": "Extra decorative", "status": "candidate", "values": [0, 3, 3, 0, 0.5, 2.5, 2.5, 0.5, 0, 3, 3, 0, 0.5, 2.5, 2.5, 0.5, 0, 3], "mode": "stepped", "icon": "saw"}];
+    const ICON_POINTS = {"zigzag": [[-1.0, 0.04], [-0.889, 0.96], [-0.778, 0.04], [-0.667, 0.96], [-0.556, 0.04], [-0.444, 0.96], [-0.333, 0.04], [-0.222, 0.96], [-0.111, 0.04], [0.0, 0.96], [0.111, 0.04], [0.222, 0.96], [0.333, 0.04], [0.444, 0.96], [0.556, 0.04], [0.667, 0.96], [0.778, 0.04], [0.889, 0.96], [1.0, 0.04]], "step": [[-1.0, 0.18], [-0.82, 0.18], [-0.82, 0.36], [-0.64, 0.36], [-0.64, 0.56], [-0.46, 0.56], [-0.46, 0.74], [-0.28, 0.74], [-0.28, 0.56], [-0.1, 0.56], [-0.1, 0.36], [0.08, 0.36], [0.08, 0.18], [0.26, 0.18], [0.26, 0.36], [0.44, 0.36], [0.44, 0.56], [0.62, 0.56], [0.62, 0.74], [0.8, 0.74], [1.0, 0.74]], "wave": [[-1.0, 0.5], [-0.956, 0.599], [-0.911, 0.691], [-0.867, 0.768], [-0.822, 0.824], [-0.778, 0.855], [-0.733, 0.858], [-0.689, 0.834], [-0.644, 0.784], [-0.6, 0.712], [-0.556, 0.623], [-0.511, 0.525], [-0.467, 0.425], [-0.422, 0.331], [-0.378, 0.25], [-0.333, 0.188], [-0.289, 0.151], [-0.244, 0.14], [-0.2, 0.158], [-0.156, 0.202], [-0.111, 0.269], [-0.067, 0.354], [-0.022, 0.45], [0.022, 0.55], [0.067, 0.646], [0.111, 0.731], [0.156, 0.798], [0.2, 0.842], [0.244, 0.86], [0.289, 0.849], [0.333, 0.812], [0.378, 0.75], [0.422, 0.669], [0.467, 0.575], [0.511, 0.475], [0.556, 0.377], [0.6, 0.288], [0.644, 0.216], [0.689, 0.166], [0.733, 0.142], [0.778, 0.145], [0.822, 0.176], [0.867, 0.232], [0.911, 0.309], [0.956, 0.401], [1.0, 0.5]], "scallop": [[-1.0, 0.1], [-0.959, 0.257], [-0.918, 0.408], [-0.878, 0.547], [-0.837, 0.67], [-0.796, 0.773], [-0.755, 0.85], [-0.714, 0.899], [-0.673, 0.92], [-0.633, 0.909], [-0.592, 0.87], [-0.551, 0.801], [-0.51, 0.707], [-0.469, 0.59], [-0.429, 0.456], [-0.388, 0.308], [-0.347, 0.153], [-0.306, 0.205], [-0.265, 0.358], [-0.224, 0.502], [-0.184, 0.632], [-0.143, 0.741], [-0.102, 0.827], [-0.061, 0.886], [-0.02, 0.916], [0.02, 0.916], [0.061, 0.886], [0.102, 0.827], [0.143, 0.741], [0.184, 0.632], [0.224, 0.502], [0.265, 0.358], [0.306, 0.205], [0.347, 0.153], [0.388, 0.308], [0.429, 0.456], [0.469, 0.59], [0.51, 0.707], [0.551, 0.801], [0.592, 0.87], [0.633, 0.909], [0.673, 0.92], [0.714, 0.899], [0.755, 0.85], [0.796, 0.773], [0.837, 0.67], [0.878, 0.547], [0.918, 0.408], [0.959, 0.257], [1.0, 0.1]], "saw": [[-1.0, 0.18], [-0.75, 0.82], [-0.5, 0.18], [-0.25, 0.82], [0.0, 0.18], [0.25, 0.82], [0.5, 0.18], [0.75, 0.82], [1.0, 0.18]], "blind": [[-1.0, 0.18], [-0.82, 0.18], [-0.64, 0.18], [-0.46, 0.18], [-0.3, 0.72], [-0.14, 0.18], [0.02, 0.18], [0.2, 0.18], [0.38, 0.18], [0.54, 0.72], [0.7, 0.18], [1.0, 0.18]], "arrows": [[-1.0, 0.18], [-0.86, 0.18], [-0.74, 0.74], [-0.62, 0.18], [-0.48, 0.18], [-0.36, 0.74], [-0.24, 0.18], [-0.1, 0.18], [0.02, 0.74], [0.14, 0.18], [0.28, 0.18], [0.4, 0.74], [0.52, 0.18], [0.66, 0.18], [0.78, 0.74], [0.9, 0.18], [1.0, 0.18]], "spindle": [[-1.0, 0.5], [-0.8, 0.2], [-0.56, 0.12], [-0.34, 0.3], [-0.16, 0.64], [0.0, 0.88], [0.16, 0.64], [0.34, 0.3], [0.56, 0.12], [0.8, 0.2], [1.0, 0.5]], "pulse": [[-1.0, 0.2], [-0.88, 0.62], [-0.76, 0.86], [-0.64, 0.62], [-0.52, 0.2], [-0.3, 0.2], [-0.18, 0.62], [-0.06, 0.86], [0.06, 0.62], [0.18, 0.2], [0.4, 0.2], [0.52, 0.62], [0.64, 0.86], [0.76, 0.62], [0.88, 0.2], [1.0, 0.2]], "comb": [[-1.0, 0.18], [-0.92, 0.82], [-0.84, 0.18], [-0.778, 0.18], [-0.698, 0.82], [-0.618, 0.18], [-0.556, 0.18], [-0.476, 0.82], [-0.396, 0.18], [-0.333, 0.18], [-0.253, 0.82], [-0.173, 0.18], [-0.111, 0.18], [-0.031, 0.82], [0.049, 0.18], [0.111, 0.18], [0.191, 0.82], [0.271, 0.18], [0.333, 0.18], [0.413, 0.82], [0.493, 0.18], [0.556, 0.18], [0.636, 0.82], [0.716, 0.18], [0.778, 0.18], [0.858, 0.82], [0.938, 0.18], [1.0, 0.18]], "hi-lo": [[-1.0, 0.18], [-0.78, 0.84], [-0.56, 0.18], [-0.34, 0.64], [-0.12, 0.18], [0.1, 0.56], [0.32, 0.18], [0.54, 0.46], [0.76, 0.18], [1.0, 0.38]]};
+    const ICON_LABELS = {"zigzag": "Zygzak", "step": "Schodki / trójskok", "wave": "Płynna fala", "scallop": "Muszelka", "saw": "Piła / trójkąty", "blind": "Ścieg kryty", "arrows": "Strzałki", "spindle": "Wrzeciono", "pulse": "Impulsy", "comb": "Grzebyk", "hi-lo": "Wysoko-nisko"};
+    // </generated:presets>
 
     // Stan aplikacji
     let currentCam = {
@@ -1256,6 +1259,8 @@
     const TRANSPORT_W = 3.000;
     const TRANSPORT_LEN = 4.100;
     const TRANSPORT_DEPTH = 5.500;
+    const TRANSPORT_GAP = 1.000;
+    const LABEL_H = 0.309;
 
     // Inicjalizacja
     window.addEventListener('DOMContentLoaded', () => {
@@ -1276,6 +1281,18 @@
 
     // --- Dynamiczne uzupełnianie selektorów 34 ściegów (w Edytorze i Symulatorze) ---
     function populateCamSelectors() {
+      const iconSel = document.getElementById('iconKindSelect');
+      if (iconSel) {
+        iconSel.innerHTML = '';
+        Object.keys(ICON_POINTS).forEach(kind => {
+          const opt = document.createElement('option');
+          opt.value = kind;
+          opt.textContent = ICON_LABELS[kind] || kind;
+          iconSel.appendChild(opt);
+        });
+        iconSel.value = currentCam.icon;
+      }
+
       ['fabricCamSelect', 'editorPresetSelect'].forEach(selId => {
         const select = document.getElementById(selId);
         if (!select) return;
@@ -1387,13 +1404,7 @@
 
       for (let x = 0; x < w; x++) {
         let t = (x / w) * 18;
-        let v = 0;
-        if (mode === 'stepped') {
-          let idx = Math.floor(t) % 18;
-          v = values[idx];
-        } else {
-          v = interpolateCyclic(values, t);
-        }
+        let v = profileValueAt(values, mode, t);
         let y = h - 4 - (v / 3.0) * (h - 8);
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
@@ -1423,7 +1434,6 @@
       document.getElementById('iconKindSelect').value = currentCam.icon;
       document.getElementById('activeCamHeader').textContent = `Krzywka ${currentCam.cam} — ${currentCam.name}`;
 
-      isCustomModified = false;
       const fabSel = document.getElementById('fabricCamSelect');
       if (fabSel) fabSel.value = currentCam.cam;
       const fabBadge = document.getElementById('fabricActiveCamBadge');
@@ -1461,7 +1471,8 @@
 
         // Interakcja myszą (kliknięcie lub przeciąganie)
         const track = col.querySelector('.step-bar-track');
-        track.addEventListener('mousedown', (e) => startStepDrag(i, e));
+        track.style.touchAction = 'none';
+        track.addEventListener('pointerdown', (e) => { e.preventDefault(); startStepDrag(i, e); });
         container.appendChild(col);
       }
 
@@ -1490,7 +1501,6 @@
         // Zaokrąglenie do 0.25 dla wygody
         let snapVal = Math.round(relY * 3.0 * 4) / 4;
         currentCam.values[stepIdx] = snapVal;
-        isCustomModified = true;
         updateStepBars();
         updateThreeMesh();
         drawFabricSimulation();
@@ -1501,12 +1511,14 @@
 
       function onMouseMove(e) { updateFromMouse(e); }
       function onMouseUp() {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener('pointermove', onMouseMove);
+        window.removeEventListener('pointerup', onMouseUp);
+        window.removeEventListener('pointercancel', onMouseUp);
       }
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('pointermove', onMouseMove);
+      window.addEventListener('pointerup', onMouseUp);
+      window.addEventListener('pointercancel', onMouseUp);
     }
 
     function applyPattern(kind) {
@@ -1541,23 +1553,48 @@
       showToast(`Zastosowano wzorzec: ${kind}`);
     }
 
-    // --- Spline Catmull-Rom cykliczny ---
-    function interpolateCyclic(points, tGlobal) {
-      const n = points.length;
-      let idx1 = Math.floor(tGlobal) % n;
-      let idx0 = (idx1 + n - 1) % n;
-      let idx2 = (idx1 + 1) % n;
-      let idx3 = (idx1 + 2) % n;
-      let t = tGlobal - Math.floor(tGlobal);
+    // --- Profil wieńca: ten sam wzór co tools/generate_cam.py i _elna_measured_common.scad ---
+    // Kąt 0 = gniazdo zabieraka (+Y), kąty rosną zgodnie z ruchem wskazówek zegara (widok z góry).
+    // Krok i jest wyśrodkowany na 20·i stopni.
+    function clamp3(v) { return Math.max(0, Math.min(3, Number(v) || 0)); }
 
-      let p0 = points[idx0], p1 = points[idx1], p2 = points[idx2], p3 = points[idx3];
-      let val = 0.5 * (
-        (2 * p1) +
-        (-p0 + p2) * t +
-        (2 * p0 - 5 * p1 + 4 * p2 - p3) * (t * t) +
-        (-p0 + 3 * p1 - 3 * p2 + p3) * (t * t * t)
-      );
-      return Math.max(0, Math.min(3, val));
+    // Interpolacja kosinusowa (bez przestrzeleń poza 0..3), t w krokach 0..18
+    function interpolateCyclic(values, t) {
+      const n = values.length;
+      const f = Math.floor(t);
+      const i0 = ((f % n) + n) % n, i1 = (i0 + 1) % n;
+      const s = (1 - Math.cos((t - f) * Math.PI)) / 2;
+      return clamp3(values[i0]) * (1 - s) + clamp3(values[i1]) * s;
+    }
+
+    function profileValueAt(values, mode, t) {
+      if (mode === 'stepped') return clamp3(values[((Math.round(t) % 18) + 18) % 18]);
+      return interpolateCyclic(values, t);
+    }
+
+    // stepped: postój po łuku ±7° wokół środka kroku + proste rampy; smooth: punkt co 2°
+    function camProfilePoints(values, mode) {
+      const pts = [];
+      const pt = (r, deg) => { const a = deg * Math.PI / 180; return [r * Math.sin(a), r * Math.cos(a)]; };
+      if (mode === 'stepped') {
+        for (let i = 0; i < 18; i++) {
+          const r = BASE_R + clamp3(values[i]) / 3 * THROW;
+          for (let k = 0; k <= 7; k++) pts.push(pt(r, i * 20 - 7 + 2 * k));
+        }
+      } else {
+        for (let deg = 0; deg < 360; deg += 2) {
+          pts.push(pt(BASE_R + interpolateCyclic(values, deg / 20) / 3 * THROW, deg));
+        }
+      }
+      return pts;
+    }
+
+    // Czy bieżąca krzywka to dokładnie fabryczny preset (wtedy pokazujemy i pobieramy gotowy STL)
+    function isOfficialPreset() {
+      const p = CAM_PRESETS.find(c => c.cam === currentCam.cam);
+      return !!p && p.mode === currentCam.mode && p.icon === currentCam.icon &&
+        p.values.length === currentCam.values.length &&
+        p.values.every((v, i) => Math.abs(v - currentCam.values[i]) < 1e-9);
     }
 
     // --- Symulacja Tkaniny i Ściegu ---
@@ -1796,12 +1833,10 @@
     let wireframeMode = false;
     let currentPart = "assembly"; // "assembly", "body", "ring"
     let currentMaterialStyle = "bakelite"; // "bakelite", "elna_green", "print_3d", "two_tone"
-    let isCustomModified = false;
     const stlCache = new Map();
     let stlLoader = null;
 
-    // Stałe konstrukcyjne v2 (zgodne z _elna_measured_common.scad)
-    const DOME_CROWN = 1.500;
+    // Stałe konstrukcyjne v3 (zgodne z _elna_measured_common.scad; wierzch płaski)
     const RING_H = 1.200;
 
     function initThreeJS() {
@@ -1943,302 +1978,294 @@
     }
 
     // ==============================================================================
-    // GENEROWANIE DOKŁADNEJ GEOMETRII PARAMETRYCZNEJ 3D (Z KOPUŁKĄ, ZABIERAKIEM I RANTEM)
+    // GEOMETRIA PARAMETRYCZNA 3D (szczelna siatka z gniazdem zabieraka)
+    // Układ jak w OpenSCAD: Z w górę, gniazdo zabieraka na +Y.
     // ==============================================================================
-    function generateCamGeometry(targetPart = currentPart) {
-      const N = 144;
-      const values = currentCam.values;
-      const mode = currentCam.mode;
 
-      const cosA = new Float32Array(N);
-      const sinA = new Float32Array(N);
-      const radii = new Float32Array(N);
-
-      for (let i = 0; i < N; i++) {
-        const a = i * 2.0 * Math.PI / N;
-        cosA[i] = Math.cos(a);
-        sinA[i] = Math.sin(a);
-
-        let v = 0;
-        if (mode === 'stepped') {
-          let step = Math.floor((i / N) * 18) % 18;
-          v = values[step];
-        } else {
-          v = interpolateCyclic(values, (i / N) * 18);
+    // Kontur wieńca zagęszczony tak, by sąsiednie punkty dzieliło najwyżej ~2°.
+    function densifiedProfile(values, mode) {
+      const src = camProfilePoints(values, mode);
+      const out = [];
+      for (let i = 0; i < src.length; i++) {
+        const a = src[i], b = src[(i + 1) % src.length];
+        let da = Math.atan2(b[0], b[1]) - Math.atan2(a[0], a[1]);
+        while (da < 0) da += 2 * Math.PI;
+        const n = Math.max(1, Math.ceil((da * 180 / Math.PI) / 2.05));
+        for (let k = 0; k < n; k++) {
+          const t = k / n;
+          out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
         }
-        radii[i] = BASE_R + (v / 3.0) * THROW;
+      }
+      return out;
+    }
+
+    // part: "assembly" (cały dysk), "body" (korpus od z=RING_H), "ring" (pierścień)
+    function generateCamGeometry(targetPart = currentPart) {
+      const profile = densifiedProfile(currentCam.values, currentCam.mode);
+      const M = profile.length;
+      const dirs = profile.map(p => { const r = Math.hypot(p[0], p[1]); return [p[0] / r, p[1] / r]; });
+      const profR = profile.map(p => Math.hypot(p[0], p[1]));
+      const HOLE_TOP_Z = COUNTERBORE_H + CONE_H;
+
+      const positions = [];
+      const indices = [];
+
+      // Pierścień wierzchołków: r (liczba lub tablica M promieni) na wysokości z.
+      // Wierzchołki w tym samym miejscu co w poprzednim pierścieniu są współdzielone,
+      // dzięki czemu siatka jest topologicznie zamknięta także tam, gdzie profil = BASE_R.
+      const rings = [];
+      function addRing(r, z) {
+        const prev = rings[rings.length - 1];
+        const ids = new Array(M);
+        const radii = new Array(M);
+        for (let i = 0; i < M; i++) {
+          const rr = (typeof r === 'number') ? r : r[i];
+          radii[i] = rr;
+          if (prev && Math.abs(prev.radii[i] - rr) < 1e-9 && Math.abs(prev.z - z) < 1e-9) {
+            ids[i] = prev.ids[i];
+          } else {
+            ids[i] = positions.length / 3;
+            positions.push(rr * dirs[i][0], rr * dirs[i][1], z);
+          }
+        }
+        rings.push({ ids, radii, z });
       }
 
-      // Geometria w zależności od targetPart:
-      // 1. "ring" - sam pierścień uniwersalny (z=0 .. 1.2, r=BASE_R lub radii)
-      // 2. "body" - korpus v2 bez pierścienia (z=RING_H .. BODY_TOP_H + dome)
-      // 3. "assembly" - pełny dysk z rantem dolnym (z=0 .. BODY_TOP_H + dome)
+      function vtx(i) { return [positions[3 * i], positions[3 * i + 1], positions[3 * i + 2]]; }
+      function triNormal(a, b, c) {
+        const A = vtx(a), B = vtx(b), C = vtx(c);
+        const u = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+        const v = [C[0] - A[0], C[1] - A[1], C[2] - A[2]];
+        return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      }
+      // Dodaje trójkąt z normalną zgodną z kierunkiem `want` (pomija zdegenerowane).
+      function addTri(a, b, c, want) {
+        if (a === b || b === c || a === c) return;
+        const n = triNormal(a, b, c);
+        const dot = n[0] * want[0] + n[1] * want[1] + n[2] * want[2];
+        if (Math.abs(dot) < 1e-12 && Math.hypot(n[0], n[1], n[2]) < 1e-12) return;
+        if (dot >= 0) indices.push(a, b, c); else indices.push(a, c, b);
+      }
+
+      // Ściana boczna między pierścieniami A i B. Przekrój (r, z) obchodzimy
+      // przeciwnie do ruchu wskazówek zegara, więc normalna na zewnątrz = (dz, -dr).
+      function connectRings(A, B) {
+        for (let i = 0; i < M; i++) {
+          const j = (i + 1) % M;
+          const dr = ((B.radii[i] - A.radii[i]) + (B.radii[j] - A.radii[j])) / 2;
+          const dz = B.z - A.z;
+          const mx = (dirs[i][0] + dirs[j][0]) / 2, my = (dirs[i][1] + dirs[j][1]) / 2;
+          const want = [dz * mx, dz * my, -dr];
+          addTri(A.ids[i], A.ids[j], B.ids[j], want);
+          addTri(A.ids[i], B.ids[j], B.ids[i], want);
+        }
+      }
+
+      // Prostokąt gniazda zabieraka (w rzucie z góry)
+      const sy0 = COUNTERBORE_R + TRANSPORT_GAP, sy1 = sy0 + TRANSPORT_LEN, sx = TRANSPORT_W / 2;
+      const slotXY = [[-sx, sy0], [sx, sy0], [sx, sy1], [-sx, sy1]];
+      function addSlotLoop(z) {
+        return slotXY.map(p => { const id = positions.length / 3; positions.push(p[0], p[1], z); return id; });
+      }
+
+      // Płaska ściana pierścieniowa (zewn. kontur A, wewn. kontur B) z otworem gniazda.
+      // Poza wycinkiem ±12° wokół gniazda: pasy czworokątów (oba kontury mają te same kąty).
+      // W wycinku: wachlarze od konturów do krawędzi prostokąta gniazda + dwa czworokąty z boków.
+      // (Bez earcut — ten usuwa współliniowe punkty rampy i zostawia szczeliny w siatce.)
+      function flatFaceWithSlot(A, B, slotIds, normalZ) {
+        const want = [0, 0, normalZ];
+        const ang = i => Math.atan2(dirs[i][0], dirs[i][1]);
+        const lim = 12 * Math.PI / 180;
+        let iL = 0, iR = 0, bestL = Infinity, bestR = Infinity;
+        for (let i = 0; i < M; i++) {
+          const a = ang(i);
+          if (Math.abs(a + lim) < bestL) { bestL = Math.abs(a + lim); iL = i; }
+          if (Math.abs(a - lim) < bestR) { bestR = Math.abs(a - lim); iR = i; }
+        }
+        for (let i = iR; i !== iL; i = (i + 1) % M) {
+          const j = (i + 1) % M;
+          addTri(A.ids[i], A.ids[j], B.ids[j], want);
+          addTri(A.ids[i], B.ids[j], B.ids[i], want);
+        }
+        const sector = [];
+        for (let i = iL; ; i = (i + 1) % M) { sector.push(i); if (i === iR) break; }
+        const [BL, BR, TR, TL] = slotIds;
+        const angOf = id => Math.atan2(positions[3 * id], positions[3 * id + 1]);
+        function zipper(chainA, chainB) {
+          let a = 0, b = 0;
+          while (a < chainA.length - 1 || b < chainB.length - 1) {
+            const nextA = a < chainA.length - 1 ? angOf(chainA[a + 1]) : Infinity;
+            const nextB = b < chainB.length - 1 ? angOf(chainB[b + 1]) : Infinity;
+            if (nextA <= nextB) { addTri(chainA[a], chainA[a + 1], chainB[b], want); a++; }
+            else { addTri(chainA[a], chainB[b + 1], chainB[b], want); b++; }
+          }
+        }
+        zipper(sector.map(i => A.ids[i]), [TL, TR]);
+        zipper(sector.map(i => B.ids[i]), [BL, BR]);
+        addTri(A.ids[iL], TL, BL, want);
+        addTri(A.ids[iL], BL, B.ids[iL], want);
+        addTri(A.ids[iR], TR, BR, want);
+        addTri(A.ids[iR], BR, B.ids[iR], want);
+      }
+
+      // Ściany gniazda: normalne do środka gniazda (to wnęka, nie bryła)
+      function slotWalls(bot, top, ceiling) {
+        const cx = 0, cy = (sy0 + sy1) / 2;
+        for (let k = 0; k < 4; k++) {
+          const k2 = (k + 1) % 4;
+          const mx = (slotXY[k][0] + slotXY[k2][0]) / 2, my = (slotXY[k][1] + slotXY[k2][1]) / 2;
+          const want = [cx - mx, cy - my, 0];
+          addTri(bot[k], bot[k2], top[k2], want);
+          addTri(bot[k], top[k2], top[k], want);
+        }
+        if (ceiling) {
+          addTri(top[0], top[1], top[2], [0, 0, -1]);
+          addTri(top[0], top[2], top[3], [0, 0, -1]);
+        }
+      }
 
       if (targetPart === 'ring') {
-        return generateUniversalRingGeometry(N, cosA, sinA);
-      }
-
-      const zStart = (targetPart === 'body') ? RING_H : 0.0;
-      const zLobeTop = LOBE_H;
-      const zBodyTop = BODY_TOP_H;
-
-      // Promień sfery kopułki wg OpenSCAD:
-      // dome_r_sphere = (body_r^2 + dome_crown^2) / (2*dome_crown) = (18.55^2 + 1.5^2)/(3) ~ 115.8 mm
-      const dome_r_sphere = (BASE_R * BASE_R + DOME_CROWN * DOME_CROWN) / (2 * DOME_CROWN);
-      const dome_base_z = zBodyTop - (dome_r_sphere - DOME_CROWN);
-
-      function calcDomeZ(r) {
-        if (r >= BASE_R) return zBodyTop;
-        const diff = dome_r_sphere * dome_r_sphere - r * r;
-        return (diff > 0) ? (dome_base_z + Math.sqrt(diff)) : zBodyTop;
-      }
-
-      // Pierścienie Z (współrzędne cylindryczne)
-      // Ring 0: dno (Z=zStart, R=radii)
-      // Ring 1: uskok wieńca dół (Z=zLobeTop, R=radii)
-      // Ring 2: uskok wieńca góra/korpus (Z=zLobeTop, R=BASE_R)
-      // Ring 3: górna krawędź korpusu (Z=zBodyTop, R=BASE_R)
-      // Ring 4: zewnętrzny wypukły rant referencyjny (Z=calcDomeZ(18.1), R=18.1)
-      // Ring 5: pośredni pierścień kopułki (Z=calcDomeZ(14.0), R=14.0)
-      // Ring 6: kołnierz wokół osi zewnętrzny (Z=calcDomeZ(10.3) + 0.45, R=10.3)
-      // Ring 7: kołnierz wokół osi wewnętrzny (Z=calcDomeZ(8.6) + 0.45, R=8.6)
-      // Ring 8: krawędź otworu wałka na szczycie (Z=calcDomeZ(CENTER_HOLE_R), R=CENTER_HOLE_R)
-      // Ring 9: otwór wałka cylinder (Z=3.0, R=CENTER_HOLE_R)
-      // Ring 10: koniec stożka / początek counterbore (Z=1.5, R=COUNTERBORE_R)
-      // Ring 11: dno counterbore (Z=zStart, R=COUNTERBORE_R)
-
-      const numRings = 12;
-      const positions = new Float32Array(numRings * N * 3);
-      let pIdx = 0;
-
-      function setRingR(rArray, zArrayOrNumber) {
-        for (let i = 0; i < N; i++) {
-          let r = (typeof rArray === 'number') ? rArray : rArray[i];
-          let z = (typeof zArrayOrNumber === 'number') ? zArrayOrNumber : zArrayOrNumber(r);
-          positions[pIdx++] = r * cosA[i];
-          positions[pIdx++] = r * sinA[i];
-          positions[pIdx++] = z;
+        addRing(BASE_R, 0);              // 0
+        addRing(BASE_R, RING_H);         // 1
+        addRing(COUNTERBORE_R, RING_H);  // 2
+        addRing(COUNTERBORE_R, 0);       // 3
+        connectRings(rings[0], rings[1]);
+        connectRings(rings[2], rings[3]);
+        const sBot = addSlotLoop(0), sTop = addSlotLoop(RING_H);
+        flatFaceWithSlot(rings[1], rings[2], sTop, +1);
+        flatFaceWithSlot(rings[0], rings[3], sBot, -1);
+        slotWalls(sBot, sTop, false);
+      } else {
+        const z0 = (targetPart === 'body') ? RING_H : 0;
+        if (targetPart === 'assembly') {
+          addRing(BASE_R, 0);
+          addRing(BASE_R, RING_H);
         }
-      }
-
-      setRingR(radii, zStart);                              // 0: dno wieńca
-      setRingR(radii, zLobeTop);                             // 1: szczyt wieńca
-      setRingR(BASE_R, zLobeTop);                            // 2: uskok korpusu
-      setRingR(BASE_R, zBodyTop);                            // 3: krawędź korpusu
-      setRingR(18.10, r => calcDomeZ(r) + 0.22);             // 4: rant referencyjny
-      setRingR(14.00, r => calcDomeZ(r));                    // 5: kopułka środkowa
-      setRingR(10.30, r => calcDomeZ(r) + 0.45);             // 6: kołnierz wałka zewn.
-      setRingR(8.60,  r => calcDomeZ(r) + 0.45);             // 7: kołnierz wałka wewn.
-      setRingR(CENTER_HOLE_R, r => calcDomeZ(r));            // 8: szczyt otworu
-      setRingR(CENTER_HOLE_R, 3.0);                          // 9: cylindryczny otwór
-      setRingR(COUNTERBORE_R, COUNTERBORE_H);                // 10: stożek / counterbore
-      setRingR(COUNTERBORE_R, zStart);                       // 11: dno counterbore
-
-      const indices = [];
-      function addQuad(v1, v2, v3, v4) {
-        indices.push(v1, v2, v3);
-        indices.push(v1, v3, v4);
-      }
-
-      for (let r = 0; r < 7; r++) {
-        for (let i = 0; i < N; i++) {
-          let nxt = (i + 1) % N;
-          addQuad(r * N + i, r * N + nxt, (r + 1) * N + nxt, (r + 1) * N + i);
-        }
-      }
-
-      // Przejście z Ring 7 do Ring 8 (otwór wałka)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(7 * N + i, 7 * N + nxt, 8 * N + nxt, 8 * N + i);
-      }
-
-      // Wewnętrzny otwór osi (od Ring 8 do Ring 9, normalna do środka)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(8 * N + i, 9 * N + i, 9 * N + nxt, 8 * N + nxt);
-      }
-
-      // Stożkowe rozszerzenie 3.0 -> 1.5 mm (Ring 9 -> Ring 10, do środka)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(9 * N + i, 10 * N + i, 10 * N + nxt, 9 * N + nxt);
-      }
-
-      // Podtoczenie dolne counterbore 1.5 -> zStart (Ring 10 -> Ring 11)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(10 * N + i, 11 * N + i, 11 * N + nxt, 10 * N + nxt);
-      }
-
-      // Dno dolne (Ring 11 -> Ring 0, normalna w dół)
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        addQuad(11 * N + i, 11 * N + nxt, 0 * N + nxt, 0 * N + i);
+        addRing(profR, RING_H);
+        addRing(profR, LOBE_H);
+        addRing(BASE_R, LOBE_H);
+        addRing(BASE_R, BODY_TOP_H);
+        addRing(CENTER_HOLE_R, BODY_TOP_H);
+        addRing(CENTER_HOLE_R, HOLE_TOP_Z);
+        addRing(COUNTERBORE_R, COUNTERBORE_H);
+        addRing(COUNTERBORE_R, z0);
+        for (let k = 0; k < rings.length - 1; k++) connectRings(rings[k], rings[k + 1]);
+        const sBot = addSlotLoop(z0), sTop = addSlotLoop(TRANSPORT_DEPTH);
+        flatFaceWithSlot(rings[0], rings[rings.length - 1], sBot, -1);
+        slotWalls(sBot, sTop, true);
       }
 
       const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
       geometry.setIndex(indices);
-      geometry.computeVertexNormals();
-
+      if (targetPart === 'body') geometry.translate(0, 0, -RING_H);  // jak cam_XX_body.stl: stoi na z=0
       return geometry;
     }
 
-    // Geometria uniwersalnego pierścienia dolnego (universal_ring.scad)
-    function generateUniversalRingGeometry(N, cosA, sinA) {
-      const numRings = 4;
-      const positions = new Float32Array(numRings * N * 3);
-      let pIdx = 0;
-
-      function setR(r, z) {
-        for (let i = 0; i < N; i++) {
-          positions[pIdx++] = r * cosA[i];
-          positions[pIdx++] = r * sinA[i];
-          positions[pIdx++] = z;
-        }
-      }
-
-      setR(BASE_R, 0.0);             // 0: spód zewnętrzny
-      setR(BASE_R, RING_H);          // 1: góra zewnętrzna
-      setR(CENTER_HOLE_R, RING_H);   // 2: góra otwór
-      setR(COUNTERBORE_R, 0.0);      // 3: dno counterbore
-
-      const indices = [];
-      function addQuad(v1, v2, v3, v4) {
-        indices.push(v1, v2, v3);
-        indices.push(v1, v3, v4);
-      }
-
-      for (let i = 0; i < N; i++) {
-        let nxt = (i + 1) % N;
-        // Płaszcz zewn
-        addQuad(0 * N + i, 0 * N + nxt, 1 * N + nxt, 1 * N + i);
-        // Górne czoło
-        addQuad(1 * N + i, 1 * N + nxt, 2 * N + nxt, 2 * N + i);
-        // Otwór wewn stożkowy do z=0
-        addQuad(2 * N + i, 3 * N + i, 3 * N + nxt, 2 * N + nxt);
-        // Dno
-        addQuad(3 * N + i, 3 * N + nxt, 0 * N + nxt, 0 * N + i);
-      }
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setIndex(indices);
-      geometry.computeVertexNormals();
-      return geometry;
+    // Wysokość pokazywanego elementu (do wyśrodkowania w scenie)
+    function partHeight(part) {
+      if (part === 'ring') return RING_H;
+      if (part === 'body') return TOTAL_H - RING_H;
+      return TOTAL_H;
     }
 
-    // Tekstura canvas 1024x1024 dla realistycznych przetłoczeń (SWISS MADE, numer, piktogram, ząbki)
-    function createDomeMarkingsTexture(camNumber, iconKind, style) {
+    // Tekstura oznaczeń wierzchu — ten sam układ co top_markings() w OpenSCAD.
+    // Rysowana w układzie OpenSCAD (x w prawo, y w górę); 1 px = BASE_R/512 mm.
+    function createTopMarkingsTexture(camNumber, iconKind, style) {
       const cvs = document.createElement('canvas');
       cvs.width = 1024;
       cvs.height = 1024;
       const ctx = cvs.getContext('2d');
+      const c = 512;
+      const s = 512 / BASE_R;
+      const X = x => c + x * s;
+      const Y = y => c - y * s;
 
-      ctx.clearRect(0, 0, 1024, 1024);
-
-      const center = 512;
-      const scale = 512 / BASE_R; // px na mm
-
-      // Kolory oznaczeń
-      const markColor = (style === 'bakelite') ? '#f3f4f6' : (style === 'elna_green' ? '#6ee7b7' : '#e0f2fe');
+      const markColor = (style === 'bakelite') ? '#f3f4f6' : (style === 'elna_green' ? '#d1fae5' : '#e0f2fe');
       ctx.fillStyle = markColor;
       ctx.strokeStyle = markColor;
-
-      // 1. Numer krzywki w okrągłym medalionie na [11.55, -7.25]
-      const bX = center + 11.55 * scale;
-      const bY = center + 7.25 * scale;
-      ctx.lineWidth = 0.55 * scale;
-      ctx.beginPath();
-      ctx.arc(bX, bY, 2.65 * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.font = `bold ${Math.round(3.2 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(camNumber, bX, bY + 1);
-
-      // 2. Przeciwległy medalion bez numeru na [-11.80, -7.25]
-      const oppX = center - 11.80 * scale;
-      const oppY = center + 7.25 * scale;
-      ctx.beginPath();
-      ctx.arc(oppX, oppY, 2.5 * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // 3. Napis "SWISS" na [-14.35, 0.80], obrócony 90 st.
-      ctx.save();
-      const sX = center - 14.35 * scale;
-      const sY = center - 0.80 * scale;
-      ctx.translate(sX, sY);
-      ctx.rotate(-Math.PI / 2);
-      ctx.font = `bold ${Math.round(2.1 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
-      ctx.fillText("SWISS", 0, 0);
-      ctx.restore();
-
-      // 4. Napis "MADE" na [0.0, -15.15]
-      const mX = center;
-      const mY = center + 15.15 * scale;
-      ctx.font = `bold ${Math.round(2.0 * scale)}px 'Outfit', 'Liberation Sans', sans-serif`;
-      ctx.fillText("MADE", mX, mY);
-
-      // 5. 13 ząbków kalibracyjnych wzdłuż dolnego łuku (kąty 208 do 332 st.)
-      for (let a = 208; a <= 332; a += 10) {
-        const rad = a * Math.PI / 180;
-        const pX = center + (BASE_R - 0.65) * scale * Math.cos(rad);
-        const pY = center - (BASE_R - 0.65) * scale * Math.sin(rad);
-        ctx.save();
-        ctx.translate(pX, pY);
-        ctx.rotate(-rad + Math.PI / 2);
-        ctx.fillRect(-0.35 * scale, -0.2 * scale, 0.7 * scale, 0.4 * scale);
-        ctx.restore();
-      }
-
-      // 6. Rysowanie piktogramu ściegu
-      ctx.lineWidth = 0.5 * scale;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const iconX = center;
-      const iconY = center + 11.65 * scale;
+      const font = size => `bold ${Math.round(size * 1.36 * s)}px 'Liberation Sans', Arial, sans-serif`;
 
-      ctx.beginPath();
-      if (iconKind === 'wave') {
-        for (let i = 0; i <= 24; i++) {
-          let px = iconX + (i - 12) * 0.32 * scale;
-          let py = iconY + Math.sin(i * 0.5) * 1.1 * scale;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-      } else if (iconKind === 'scallop') {
-        for (let i = 0; i <= 24; i++) {
-          let px = iconX + (i - 12) * 0.32 * scale;
-          let py = iconY - Math.abs(Math.sin(i * 0.45)) * 1.3 * scale;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-      } else {
-        // Zygzak domyślny
-        for (let i = 0; i <= 6; i++) {
-          let px = iconX + (i - 3) * 1.2 * scale;
-          let py = iconY + ((i % 2 === 0) ? -1.2 : 1.2) * scale;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
+      function ring(x, y, ro, ri) {
+        ctx.lineWidth = (ro - ri) * s;
+        ctx.beginPath();
+        ctx.arc(X(x), Y(y), (ro + ri) / 2 * s, 0, Math.PI * 2);
+        ctx.stroke();
       }
+
+      // Medalion z numerem i pusty medalion
+      ring(11.55, -7.25, 2.95, 2.40);
+      ring(-11.80, -7.25, 2.80, 2.25);
+      const num = String(camNumber);
+      const nSize = num.length <= 2 ? 2.6 : 2.6 * 2 / num.length;
+      ctx.font = font(nSize);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(num, X(11.55), Y(-7.25) + 0.1 * s);
+
+      // Piktogram ściegu (po stronie przeciwnej do gniazda)
+      const pts = ICON_POINTS[iconKind] || ICON_POINTS.zigzag;
+      ctx.lineWidth = 0.5 * s;
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const px = X(p[0] * 7.5), py = Y(-11.65 + p[1] * 2.45);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
       ctx.stroke();
+
+      // Kółko nad gniazdem zabieraka i napis SWISS MADE wzdłuż łuku
+      ring(0, 13.2, 1.35, 0.85);
+      const glyphW = ch => ch === 'I' ? 0.30 : ch === 'W' ? 0.94 : ch === 'M' ? 0.83 : (ch === 'A' || ch === 'D') ? 0.72 : 0.67;
+      const arcR = 13.10, arcSize = 1.90, em = arcSize * 1.15, gap = 8.5;
+      const spanDeg = str => [...str].reduce((acc, ch) => acc + glyphW(ch), 0) * em / arcR * 180 / Math.PI;
+      function arcText(str, startDeg) {
+        ctx.font = font(arcSize);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        let acc = 0;
+        [...str].forEach(ch => {
+          const aDeg = startDeg + (acc + glyphW(ch) / 2) * em / arcR * 180 / Math.PI;
+          acc += glyphW(ch);
+          const a = aDeg * Math.PI / 180;
+          ctx.save();
+          ctx.translate(X(arcR * Math.sin(a)), Y(arcR * Math.cos(a)));
+          ctx.rotate(a);
+          ctx.fillText(ch, 0, 0);
+          ctx.restore();
+        });
+      }
+      arcText('SWISS', -gap - spanDeg('SWISS'));
+      arcText('MADE', gap);
+
+      // 18 nacięć kroków na krawędzi (wycięcia — ciemne)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      for (let i = 0; i < 18; i++) {
+        const a = i * 20 * Math.PI / 180;
+        ctx.save();
+        ctx.translate(X((BASE_R - 0.5) * Math.sin(a)), Y((BASE_R - 0.5) * Math.cos(a)));
+        ctx.rotate(a);
+        ctx.fillRect(-0.4 * s, -0.5 * s, 0.8 * s, 1.0 * s);
+        ctx.restore();
+      }
 
       const texture = new THREE.CanvasTexture(cvs);
       texture.anisotropy = 4;
       return texture;
     }
 
-    // --- Główna aktualizacja sceny 3D z obsługą STL i modelu parametrycznego ---
+    // --- Główna aktualizacja sceny 3D (STL z repozytorium albo model parametryczny) ---
     function updateThreeMesh() {
       if (!scene) return;
       if (camMeshGroup) scene.remove(camMeshGroup);
 
       camMeshGroup = new THREE.Group();
+      // Model w układzie OpenSCAD (Z w górę) → scena (Y w górę), wyśrodkowany w pionie
+      camMeshGroup.rotation.x = -Math.PI / 2;
+      camMeshGroup.position.y = -partHeight(currentPart) / 2;
 
-      const isPreset = CAM_PRESETS.some(p => p.cam === currentCam.cam);
-
-      if (isPreset && !isCustomModified && stlLoader) {
+      if (isOfficialPreset() && stlLoader) {
         loadCamSTL(currentCam.cam, currentPart);
       } else {
         renderProceduralCam();
@@ -2247,11 +2274,15 @@
       scene.add(camMeshGroup);
     }
 
+    function stlFileFor(camNo, part) {
+      if (part === 'ring') return 'stls/universal_ring.stl';
+      if (part === 'body') return `stls/cam_${camNo}_body.stl`;
+      return `stls/cam_${camNo}.stl`;
+    }
+
     function loadCamSTL(camNo, part) {
-      let filename = '';
-      if (part === 'assembly') filename = `stls/cam_${camNo}.stl`;
-      else if (part === 'body') filename = `stls/cam_${camNo}_body.stl`;
-      else if (part === 'ring') filename = `stls/universal_ring.stl`;
+      const filename = stlFileFor(camNo, part);
+      const group = camMeshGroup;
 
       const badge = document.getElementById('modelSourceBadge');
       if (badge) {
@@ -2260,45 +2291,39 @@
       }
 
       if (stlCache.has(filename)) {
-        applyLoadedSTL(stlCache.get(filename), filename);
+        applyLoadedSTL(group, stlCache.get(filename), filename);
         return;
       }
 
-      // Wyświetl model parametryczny natychmiast, aby uniknąć pustego ekranu podczas pobierania
+      // Model parametryczny od razu, żeby nie było pustego ekranu w trakcie pobierania
       renderProceduralCam(true);
 
       stlLoader.load(
         filename,
         function (geometry) {
           geometry.computeVertexNormals();
-          geometry.center();
-          // Obrót: pliki STL z OpenSCAD mają oś Z w górę
-          geometry.rotateX(-Math.PI / 2);
           stlCache.set(filename, geometry);
-          applyLoadedSTL(geometry, filename);
+          applyLoadedSTL(group, geometry, filename);
         },
         undefined,
         function (error) {
           console.warn(`Wczytywanie STL [${filename}] nie powiodło się, wyświetlam model parametryczny:`, error);
-          renderProceduralCam(false);
+          if (group === camMeshGroup) renderProceduralCam(false);
         }
       );
     }
 
-    function applyLoadedSTL(geometry, filename) {
-      if (!camMeshGroup) return;
-      // Wyczyść tymczasową geometrię parametryczną
-      while (camMeshGroup.children.length > 0) {
-        camMeshGroup.remove(camMeshGroup.children[0]);
-      }
+    function applyLoadedSTL(group, geometry, filename) {
+      // Odpowiedź mogła przyjść po zmianie krzywki — wtedy ją pomijamy
+      if (!group || group !== camMeshGroup) return;
+      while (group.children.length > 0) group.remove(group.children[0]);
 
       const mat = getCamMaterial(currentMaterialStyle, false, currentPart === 'ring');
       const mesh = new THREE.Mesh(geometry, mat);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      camMeshGroup.add(mesh);
+      group.add(mesh);
 
-      // Dodaj zabierak (wpust montażowy 3x4.1 mm) jako subtelny znacznik orientacji jeśli nieobecny
       const badge = document.getElementById('modelSourceBadge');
       if (badge) {
         badge.className = 'badge-source badge-source-stl';
@@ -2308,13 +2333,11 @@
 
     function renderProceduralCam(isTemporary = false) {
       if (!camMeshGroup) return;
-      while (camMeshGroup.children.length > 0) {
-        camMeshGroup.remove(camMeshGroup.children[0]);
-      }
+      while (camMeshGroup.children.length > 0) camMeshGroup.remove(camMeshGroup.children[0]);
 
-      const geom = generateCamGeometry(currentPart);
-      geom.translate(0, 0, -BODY_TOP_H / 2);
-      geom.rotateX(-Math.PI / 2);
+      // Płaskie cieniowanie: ostre krawędzie wieńca i otworów bez rozmytych normalnych
+      const geom = generateCamGeometry(currentPart).toNonIndexed();
+      geom.computeVertexNormals();
 
       const mat = getCamMaterial(currentMaterialStyle, false, currentPart === 'ring');
       const mainMesh = new THREE.Mesh(geom, mat);
@@ -2322,33 +2345,25 @@
       mainMesh.receiveShadow = true;
       camMeshGroup.add(mainMesh);
 
-      // Wytłoczenia i oznaczenia na kopułce (dla modelu parametrycznego)
+      // Oznaczenia leżą na płaskim wierzchu (z = BODY_TOP_H), nie w powietrzu
       if (currentPart !== 'ring') {
-        const topTexture = createDomeMarkingsTexture(currentCam.cam, currentCam.icon, currentMaterialStyle);
-        const diskGeom = new THREE.CircleGeometry(BASE_R - 0.1, 64);
-        const markPlaneMat = new THREE.MeshStandardMaterial({
-          map: topTexture,
+        const topZ = BODY_TOP_H - (currentPart === 'body' ? RING_H : 0);
+        const markGeom = new THREE.RingGeometry(CENTER_HOLE_R, BASE_R, 128, 1);
+        const markMat = new THREE.MeshStandardMaterial({
+          map: createTopMarkingsTexture(currentCam.cam, currentCam.icon, currentMaterialStyle),
           transparent: true,
-          opacity: 0.95,
+          alphaTest: 0.05,
           roughness: 0.35,
           metalness: 0.1,
-          depthWrite: false
+          polygonOffset: true,
+          polygonOffsetFactor: -2,
+          polygonOffsetUnits: -2,
+          wireframe: false
         });
-        const markPlane = new THREE.Mesh(diskGeom, markPlaneMat);
-        markPlane.position.set(0, (BODY_TOP_H / 2) + DOME_CROWN * 0.45 + 0.05, 0);
-        markPlane.rotateX(-Math.PI / 2);
-        camMeshGroup.add(markPlane);
+        const markMesh = new THREE.Mesh(markGeom, markMat);
+        markMesh.position.z = topZ + 0.02;
+        camMeshGroup.add(markMesh);
       }
-
-      // Dodaj model zabieraka (wpust napędowy 3.0 x 4.1 x 5.5 mm)
-      const slotGeom = new THREE.BoxGeometry(TRANSPORT_W, TRANSPORT_DEPTH, TRANSPORT_LEN);
-      const slotMat = new THREE.MeshStandardMaterial({
-        color: (currentMaterialStyle === 'bakelite') ? 0x0a0c0e : 0x033f2e,
-        roughness: 0.8
-      });
-      const slotMesh = new THREE.Mesh(slotGeom, slotMat);
-      slotMesh.position.set(0, -(BODY_TOP_H / 2) + TRANSPORT_DEPTH / 2 - 0.05, -(COUNTERBORE_R + 1.0 + TRANSPORT_LEN / 2));
-      camMeshGroup.add(slotMesh);
 
       const badge = document.getElementById('modelSourceBadge');
       if (badge && !isTemporary) {
@@ -2426,80 +2441,60 @@
     }
 
     function downloadStl(targetPart = currentPart) {
-      const isPreset = CAM_PRESETS.some(p => p.cam === currentCam.cam);
-
-      if (isPreset && !isCustomModified) {
-        // Bezpośrednie pobranie oficjalnego, sprawdzonego pliku STL z repozytorium
-        let fileUrl = '';
-        let downloadName = '';
-        if (targetPart === 'assembly') {
-          fileUrl = `stls/cam_${currentCam.cam}.stl`;
-          downloadName = `cam_${currentCam.cam}.stl`;
-        } else if (targetPart === 'body') {
-          fileUrl = `stls/cam_${currentCam.cam}_body.stl`;
-          downloadName = `cam_${currentCam.cam}_body.stl`;
-        } else if (targetPart === 'ring') {
-          fileUrl = `stls/universal_ring.stl`;
-          downloadName = `universal_ring.stl`;
-        }
-
+      if (targetPart === 'ring' || isOfficialPreset()) {
+        // Gotowy, sprawdzony plik STL z repozytorium (pierścień jest wspólny dla wszystkich krzywek)
+        const fileUrl = stlFileFor(currentCam.cam, targetPart);
+        const downloadName = fileUrl.replace('stls/', '');
         const a = document.createElement('a');
         a.href = fileUrl;
         a.download = downloadName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        showToast(`Pobrano oficjalny plik STL: ${downloadName}`);
+        showToast(`Pobrano gotowy plik STL: ${downloadName}`);
       } else {
-        // Eksport modelu parametrycznego wygenerowanego w przeglądarce
+        // Model wygenerowany w przeglądarce: profil, otwór i gniazdo zabieraka jak w OpenSCAD,
+        // bez wypukłych napisów (pełny model z oznaczeniami: „Pobierz .scad” i OpenSCAD)
         const geom = generateCamGeometry(targetPart);
-        const filename = `elna_cam_${currentCam.cam}_${targetPart}.stl`;
+        const safeNo = String(currentCam.cam).replace(/[^0-9A-Za-z_-]/g, '_');
+        const filename = `elna_cam_${safeNo}_${targetPart}.stl`;
         exportBinarySTL(geom, filename);
-        showToast(`Wyeksportowano model STL: ${filename}`);
+        showToast(`Wyeksportowano ${filename} (bez napisów — z napisami: Pobierz .scad)`);
       }
     }
 
-    // --- Generowanie OpenSCAD ---
-    function buildScadCode() {
-      const N = (currentCam.mode === 'stepped') ? 36 : 144;
-      let pts = [];
-
-      if (currentCam.mode === 'stepped') {
-        for (let i = 0; i < 18; i++) {
-          let v = currentCam.values[i];
-          let r = BASE_R + (v / 3.0) * THROW;
-          let a = i * 20.0;
-          let a1 = (a - 4.5) * Math.PI / 180;
-          let a2 = (a + 4.5) * Math.PI / 180;
-          pts.push(`[${(r * Math.sin(a1)).toFixed(4)}, ${(r * Math.cos(a1)).toFixed(4)}]`);
-          pts.push(`[${(r * Math.sin(a2)).toFixed(4)}, ${(r * Math.cos(a2)).toFixed(4)}]`);
-        }
-      } else {
-        for (let i = 0; i < N; i++) {
-          let v = interpolateCyclic(currentCam.values, (i / N) * 18);
-          let r = BASE_R + (v / 3.0) * THROW;
-          let a = i * (360.0 / N) * Math.PI / 180;
-          pts.push(`[${(r * Math.sin(a)).toFixed(4)}, ${(r * Math.cos(a)).toFixed(4)}]`);
-        }
-      }
+    // --- Generowanie OpenSCAD (ta sama biblioteka co pliki w models/) ---
+    function buildScadCode(part = currentPart) {
+      const pts = camProfilePoints(currentCam.values, currentCam.mode)
+        .map(p => `[${p[0].toFixed(4)}, ${p[1].toFixed(4)}]`);
+      const icon = (ICON_POINTS[currentCam.icon] || ICON_POINTS.zigzag)
+        .map(p => `[${p[0]},${p[1]}]`).join(', ');
+      const num = String(currentCam.cam).replace(/["\\]/g, '');
+      const call = (part === 'ring')
+        ? 'universal_ring();'
+        : `${part === 'body' ? 'elna_cam_body' : 'elna_single_cam'}(profile_points=profile_points, icon_points=icon_points, number_text="${num}");`;
 
       return `/*
-  Elna Supermatic Cam ${currentCam.cam}
+  Elna Supermatic Cam ${num}
   Name: ${currentCam.name}
+  Surface mode: ${currentCam.mode}, pictogram: ${currentCam.icon}, part: ${part}
   Generated via Elna Supermatic Cam Studio
   License: GPL-3.0-or-later
+
+  Zapisz ten plik w models/measured_parametric_single_v1/ (obok _elna_measured_common.scad)
+  i otwórz w OpenSCAD. Moduły: elna_cam_body (korpus do druku), universal_ring (pierścień),
+  elna_single_cam (cały dysk w jednym kawałku).
 */
 
-include <../measured_parametric_single_v1/_elna_measured_common.scad>;
 include <_elna_measured_common.scad>;
 
 profile_points = [
         ${pts.join(',\n        ')}
 ];
 
-icon_points = [[-1.000,0.040], [-0.889,0.960], [-0.778,0.040], [-0.667,0.960], [-0.556,0.040], [-0.444,0.960], [-0.333,0.040], [-0.222,0.960], [-0.111,0.040], [0.000,0.960], [0.111,0.040], [0.222,0.960], [0.333,0.040], [0.444,0.960], [0.556,0.040], [0.667,0.960], [0.778,0.040], [0.889,0.960], [1.000,0.040]];
+icon_points = [${icon}];
 
-elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_text="${currentCam.cam}");
+${call}
 `;
     }
 
@@ -2513,11 +2508,14 @@ elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_t
       const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `cam_${currentCam.cam}.scad`;
+      const suffix = currentPart === 'body' ? '_body' : (currentPart === 'ring' ? '_ring' : '');
+      const fname = `cam_${String(currentCam.cam).replace(/[^0-9A-Za-z_-]/g, '_')}${suffix}.scad`;
+      a.download = fname;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast(`Pobrano plik cam_${currentCam.cam}.scad!`);
+      URL.revokeObjectURL(a.href);
+      showToast(`Pobrano plik ${fname}`);
     }
 
     function copyScadToClipboard() {
@@ -2541,7 +2539,8 @@ elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_t
           overall_radius_mm: OVERALL_R,
           total_height_mm: TOTAL_H,
           body_top_height_mm: BODY_TOP_H,
-          label_height_mm: 0.309,
+          label_height_mm: LABEL_H,
+          bottom_ring_height_mm: RING_H,
           lower_cam_lobe_height_mm: LOBE_H,
           upper_round_body_radius_mm: BASE_R,
           functional_lobe_min_radius_mm: BASE_R,
@@ -2635,6 +2634,7 @@ elna_single_cam(profile_points=profile_points, icon_points=icon_points, number_t
           btn.classList.add('active');
           currentPart = btn.dataset.part;
           updateThreeMesh();
+          updateScadPreview();
           showToast(`Wyświetlono: ${btn.textContent}`);
         });
       });
