@@ -209,10 +209,10 @@ module holes_and_slots() {
     translate([0, 0, counterbore_h - cut_eps])
         cylinder(h=cone_h, r1=counterbore_r, r2=center_hole_r);
 
-    // Transport slot
+    // Transport slot: from below the bottom up to exactly z = transport_depth
     translate([0, counterbore_r + transport_gap + transport_len/2,
-               transport_depth/2 - cut_eps])
-        cube(size=[transport_w, transport_len, transport_depth], center=true);
+               (transport_depth - cut_eps)/2])
+        cube(size=[transport_w, transport_len, transport_depth + cut_eps], center=true);
 }
 
 // 18 small notches on the top rim, one per step (step centres, 20 deg apart).
